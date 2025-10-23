@@ -88,6 +88,12 @@ public class Parser
             return ParseMake();
         }
 
+        // OUTPUT statement: output value
+        if (Check(TokenType.Word) && Current.Value.ToLower() == "output")
+        {
+            return ParseOutput();
+        }
+
         // Otherwise, it's a command
         return ParseCommand();
     }
@@ -194,6 +200,15 @@ public class Parser
         var value = ParseExpression();
 
         return new MakeNode(varName, value);
+    }
+
+    private AstNode ParseOutput()
+    {
+        Consume(); // consume 'output'
+
+        var value = ParseExpression();
+
+        return new OutputNode(value);
     }
 
     private List<AstNode> ParseBlock()

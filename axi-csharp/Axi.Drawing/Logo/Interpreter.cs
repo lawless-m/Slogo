@@ -49,6 +49,10 @@ public class Interpreter
                 ExecuteMake(make);
                 break;
 
+            case OutputNode output:
+                ExecuteOutput(output);
+                break;
+
             default:
                 throw new InvalidOperationException($"Unknown node type: {node.GetType().Name}");
         }
@@ -77,7 +81,12 @@ public class Interpreter
                 return EvaluateQuery(query);
 
             case CommandNode command:
-                // Some commands might return values (future extension)
+                // Check if it's a procedure call that might return a value
+                if (_context.TryGetProcedure(command.Name, out var procedure))
+                {
+                    return EvaluateProcedureCall(command.Name, procedure!, command.Arguments);
+                }
+                // Otherwise it's a regular command, execute it and return 0
                 ExecuteCommand(command);
                 return 0;
 
@@ -359,6 +368,52 @@ public class Interpreter
                 Execute(statement);
             }
         }
+        catch (OutputException)
+        {
+            // If procedure uses OUTPUT, rethrow it to be handled by caller
+            throw;
+        }
+        finally
+        {
+            _context.PopScope();
+        }
+    }
+
+    private double EvaluateProcedureCall(string name, Procedure procedure, List<AstNode> arguments)
+    {
+        // Evaluate arguments
+        var argValues = arguments.Select(EvaluateExpression).ToList();
+
+        // Check parameter count
+        if (argValues.Count != procedure.Parameters.Count)
+        {
+            throw new InvalidOperationException(
+                $"Procedure '{name}' expects {procedure.Parameters.Count} arguments but got {argValues.Count}");
+        }
+
+        // Create local scope with parameter bindings
+        var localScope = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+        for (int i = 0; i < procedure.Parameters.Count; i++)
+        {
+            localScope[procedure.Parameters[i]] = argValues[i];
+        }
+
+        // Push scope and execute body
+        _context.PushScope(localScope);
+        try
+        {
+            foreach (var statement in procedure.Body)
+            {
+                Execute(statement);
+            }
+            // If no OUTPUT was called, return 0
+            return 0;
+        }
+        catch (OutputException ex)
+        {
+            // Procedure used OUTPUT, return the value
+            return ex.Value;
+        }
         finally
         {
             _context.PopScope();
@@ -369,5 +424,11 @@ public class Interpreter
     {
         var value = EvaluateExpression(make.Value);
         _context.SetVariable(make.VariableName, value);
+    }
+
+    private void ExecuteOutput(OutputNode output)
+    {
+        var value = EvaluateExpression(output.Value);
+        throw new OutputException(value);
     }
 }

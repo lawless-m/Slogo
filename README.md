@@ -123,6 +123,25 @@ REPEAT 4 [
 |---------|-------------|---------|
 | `REPEAT n [commands]` | Repeat commands n times | `REPEAT 4 [FORWARD 100 RIGHT 90]` |
 | `TO name :param1 :param2 ... [commands] END` | Define a procedure with parameters | `TO SQUARE :size REPEAT 4 [FD :size RT 90] END` |
+| `OUTPUT value` | Return a value from a procedure | `TO DOUBLE :n OUTPUT :n * 2 END` |
+
+**Procedures with OUTPUT:**
+
+Procedures can return values using the `OUTPUT` command. When OUTPUT is called, the procedure immediately exits and returns the specified value. The returned value can be used in expressions anywhere a number is expected.
+
+```logo
+TO DOUBLE :n
+  OUTPUT :n * 2
+END
+
+FORWARD DOUBLE 50  ; Moves forward 100
+
+TO DISTANCE :x :y
+  OUTPUT SQRT (:x * :x + :y * :y)
+END
+
+MAKE "dist DISTANCE 3 4  ; dist = 5
+```
 
 ### Arithmetic & Math Operations
 

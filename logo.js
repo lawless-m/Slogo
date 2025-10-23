@@ -1,3 +1,12 @@
+// Special exception for OUTPUT command to return values from procedures
+class OutputException extends Error {
+    constructor(value) {
+        super('OUTPUT');
+        this.value = value;
+        this.name = 'OutputException';
+    }
+}
+
 class LogoInterpreter {
     constructor() {
         this.canvas = document.getElementById('canvas');
@@ -394,12 +403,83 @@ class LogoInterpreter {
             throw new Error(`Undefined variable: ${varName}`);
         }
 
+        // Check if it's a procedure call
+        const upperToken = token.toUpperCase();
+        if (this.procedures[upperToken]) {
+            const proc = this.procedures[upperToken];
+
+            // Evaluate arguments
+            const args = [];
+            let argIndex = index + 1;
+            for (let p = 0; p < (proc.params ? proc.params.length : 0); p++) {
+                if (argIndex >= tokens.length) {
+                    throw new Error(`Procedure ${upperToken} expects ${proc.params.length} arguments`);
+                }
+                const { value, nextIndex } = this.parsePrimary(tokens, argIndex);
+                args.push(value);
+                argIndex = nextIndex;
+            }
+
+            // Execute procedure
+            const savedVars = { ...this.variables };
+
+            // Set parameters
+            if (proc.params) {
+                for (let p = 0; p < proc.params.length; p++) {
+                    this.variables[proc.params[p]] = args[p];
+                }
+            }
+
+            // Execute and catch OUTPUT
+            let returnValue = 0;
+            try {
+                // We need to execute synchronously here since we're in expression evaluation
+                // This is a limitation - we'll use a helper
+                this.executeProcedureSync(proc.body || proc);
+            } catch (error) {
+                if (error instanceof OutputException) {
+                    returnValue = error.value;
+                } else {
+                    this.variables = savedVars;
+                    throw error;
+                }
+            }
+
+            this.variables = savedVars;
+            return { value: returnValue, nextIndex: argIndex };
+        }
+
         // Number literal
         const value = parseFloat(token);
         if (isNaN(value)) {
             throw new Error(`Expected number or variable, got: ${token}`);
         }
         return { value, nextIndex: index + 1 };
+    }
+
+    // Synchronous version of execute for use in expression evaluation
+    // This handles OUTPUT statements in procedures called from expressions
+    executeProcedureSync(tokens) {
+        for (let i = 0; i < tokens.length; i++) {
+            const token = tokens[i].toUpperCase();
+
+            if (token === 'OUTPUT') {
+                const { value } = this.getNextValue(tokens, i + 1);
+                throw new OutputException(value);
+            }
+
+            // Handle MAKE for variable assignment within procedures
+            if (token === 'MAKE') {
+                const varToken = tokens[++i];
+                const varName = varToken.startsWith('"') ? varToken.substring(1).toUpperCase() : varToken.toUpperCase();
+                const { value } = this.getNextValue(tokens, i + 1);
+                this.variables[varName] = value;
+                i++; // Skip the value token(s)
+            }
+
+            // Other commands are ignored in expression context
+            // This allows procedures to be used in expressions for their OUTPUT value
+        }
     }
 
     home() {
@@ -800,6 +880,13 @@ class LogoInterpreter {
                         }
                         break;
 
+                    case 'OUTPUT':
+                        {
+                            const { value, nextIndex } = this.getNextValue(tokens, i + 1);
+                            throw new OutputException(value);
+                        }
+                        break;
+
                     case 'TO':
                         const procName = tokens[++i].toUpperCase();
                         i++;
@@ -847,8 +934,20 @@ class LogoInterpreter {
                                     this.variables[proc.params[p]] = args[p];
                                 }
 
-                                // Execute procedure body
-                                await this.execute(proc.body);
+                                // Execute procedure body and catch OUTPUT
+                                try {
+                                    await this.execute(proc.body);
+                                } catch (error) {
+                                    if (error instanceof OutputException) {
+                                        // Restore variable scope before returning
+                                        this.variables = savedVars;
+                                        // Store return value for expression evaluation
+                                        this.lastReturnValue = error.value;
+                                        // Don't throw further, just return normally
+                                    } else {
+                                        throw error;
+                                    }
+                                }
 
                                 // Restore variable scope
                                 this.variables = savedVars;
@@ -858,7 +957,17 @@ class LogoInterpreter {
                             } else {
                                 // Old-style procedure without parameters (backward compatibility)
                                 const body = proc.body || proc;
-                                await this.execute(body);
+                                try {
+                                    await this.execute(body);
+                                } catch (error) {
+                                    if (error instanceof OutputException) {
+                                        // Store return value for expression evaluation
+                                        this.lastReturnValue = error.value;
+                                        // Don't throw further, just return normally
+                                    } else {
+                                        throw error;
+                                    }
+                                }
                             }
                         } else if (token !== '' && !token.startsWith(';')) {
                             this.log(`Unknown command: ${token}`);

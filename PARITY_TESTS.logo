@@ -252,6 +252,67 @@ END
 ;SETHEADING :savedH         ; Restore heading
 ;FORWARD 20                 ; Continue from saved position
 
+; Test 28: OUTPUT - simple return value
+TO DOUBLE :n
+  OUTPUT :n * 2
+END
+
+;CLEAR
+;HOME
+;FORWARD DOUBLE 50          ; Should move forward 100
+;RIGHT 90
+;MAKE "result DOUBLE 25
+;FORWARD :result            ; Should move forward 50
+
+; Test 29: OUTPUT - multiple parameters
+TO SUM :a :b
+  OUTPUT :a + :b
+END
+
+;CLEAR
+;HOME
+;FORWARD SUM 30 20          ; Should move forward 50
+
+; Test 30: OUTPUT - with calculations
+TO DISTANCE :x :y
+  OUTPUT SQRT (:x * :x + :y * :y)
+END
+
+;CLEAR
+;HOME
+;MAKE "dist DISTANCE 3 4    ; Should be 5
+;FORWARD :dist * 10         ; Should move forward 50
+
+; Test 31: OUTPUT - used in expressions
+TO TRIPLE :n
+  OUTPUT :n * 3
+END
+
+;CLEAR
+;HOME
+;FORWARD TRIPLE 10 + 20     ; Should be (10 * 3) + 20 = 50
+
+; Test 32: OUTPUT - early return
+TO CHECKVALUE :n
+  IF :n < 0 [OUTPUT 0]
+  OUTPUT :n
+END
+
+;CLEAR
+;HOME
+;FORWARD CHECKVALUE -5      ; Should move forward 0
+;RIGHT 90
+;FORWARD CHECKVALUE 40      ; Should move forward 40
+
+; Test 33: OUTPUT - nested procedure calls
+TO QUADRUPLE :n
+  OUTPUT DOUBLE DOUBLE :n
+END
+
+;CLEAR
+;HOME
+;FORWARD QUADRUPLE 10       ; Should move forward 40
+
 ; ====================
 ; Feature Checklist
 ; ====================
@@ -272,11 +333,11 @@ END
 ; ✓ Comparison operators (=, <, >, <=, >=, <>)
 ; ✓ Logical operators (AND, OR, NOT)
 ; ✓ Query functions (XCOR, YCOR, HEADING, PENDOWN?)
+; ✓ OUTPUT (return values from procedures)
 
 ; ====================
 ; Missing Features (TODO for future parity)
 ; ====================
-; ✗ OUTPUT (return values from procedures)
 ; ✗ WHILE loops
 ; ✗ Lists and list operations
 ; ✗ String operations

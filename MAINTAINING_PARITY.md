@@ -79,6 +79,12 @@ This file contains Logo programs that test all supported features. Both implemen
 | PENDOWN? query | ✅ | ✅ | 25 |
 | Queries in expressions | ✅ | ✅ | 26 |
 | Position save/restore | ✅ | ✅ | 27 |
+| OUTPUT simple return | ✅ | ✅ | 28 |
+| OUTPUT multiple params | ✅ | ✅ | 29 |
+| OUTPUT with calculations | ✅ | ✅ | 30 |
+| OUTPUT in expressions | ✅ | ✅ | 31 |
+| OUTPUT early return | ✅ | ✅ | 32 |
+| OUTPUT nested calls | ✅ | ✅ | 33 |
 
 ## Automated Testing (Future)
 

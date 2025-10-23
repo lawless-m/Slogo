@@ -71,3 +71,8 @@ public record IfElseNode(AstNode Condition, List<AstNode> TrueBlock, List<AstNod
 /// Query function: returns turtle state (e.g., XCOR, YCOR, HEADING, PENDOWN?)
 /// </summary>
 public record QueryNode(string QueryName) : AstNode;
+
+/// <summary>
+/// OUTPUT statement: returns a value from a procedure
+/// </summary>
+public record OutputNode(AstNode Value) : AstNode;
