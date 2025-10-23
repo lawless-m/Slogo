@@ -186,6 +186,17 @@ REPEAT 4 [
                         <li><code>LPUT item list</code> - Add item to end of list</li>
                         <li><code>LIST item1 item2</code> - Create list from items</li>
                         <li><code>SENTENCE list1 list2</code> or <code>SE list1 list2</code> - Flatten/concatenate</li>
+                        <li><code>MEMBER? item list</code> or <code>MEMBERP item list</code> - Check if item in list</li>
+                        <li><code>POSITION item list</code> - Find 1-based index (0 if not found)</li>
+                    </ul>
+                </div>
+                <div class="command-group">
+                    <h3>Higher-Order Functions</h3>
+                    <ul>
+                        <li><code>MAP "proc list</code> - Apply procedure to each element</li>
+                        <li><code>FILTER "pred list</code> - Keep elements where predicate is true</li>
+                        <li><code>REDUCE "op list</code> - Reduce list to single value</li>
+                        <li><code>APPLY "proc arglist</code> - Call procedure with argument list</li>
                     </ul>
                 </div>
             </div>

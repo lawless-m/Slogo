@@ -122,12 +122,31 @@ public class Interpreter
 
     private Value EvaluateBinaryOp(BinaryOpNode node)
     {
-        var leftVal = EvaluateExpression(node.Left);
-        var rightVal = EvaluateExpression(node.Right);
         var op = node.Operator.ToLower();
 
+        // Higher-order functions (procedure name and list)
+        // Note: Need to handle these before evaluating left side, since left is a procedure name, not a value
+        if (op is "map" or "filter" or "reduce" or "apply")
+        {
+            // Get procedure name from left side (should be a variable reference to a word)
+            string procName = GetProcedureName(node.Left);
+            var rightVal = EvaluateExpression(node.Right);
+
+            return op switch
+            {
+                "map" => EvaluateMap(procName, rightVal),
+                "filter" => EvaluateFilter(procName, rightVal),
+                "reduce" => EvaluateReduce(procName, rightVal),
+                "apply" => EvaluateApply(procName, rightVal),
+                _ => throw new InvalidOperationException($"Unknown higher-order function: {node.Operator}")
+            };
+        }
+
+        var leftVal = EvaluateExpression(node.Left);
+        var rightVal = EvaluateExpression(node.Right);
+
         // List functions (two arguments)
-        if (op is "item" or "fput" or "lput" or "list" or "sentence" or "se")
+        if (op is "item" or "fput" or "lput" or "list" or "sentence" or "se" or "member?" or "memberp" or "position")
         {
             return op switch
             {
@@ -136,6 +155,8 @@ public class Interpreter
                 "lput" => EvaluateLPut(leftVal, rightVal),
                 "list" => new ListValue(new List<Value> { leftVal, rightVal }),
                 "sentence" or "se" => EvaluateSentence(leftVal, rightVal),
+                "member?" or "memberp" => EvaluateMember(leftVal, rightVal),
+                "position" => EvaluatePosition(leftVal, rightVal),
                 _ => throw new InvalidOperationException($"Unknown list operation: {node.Operator}")
             };
         }
@@ -230,6 +251,261 @@ public class Interpreter
             result.Add(val2);
 
         return new ListValue(result);
+    }
+
+    private Value EvaluateMember(Value item, Value listVal)
+    {
+        if (!listVal.IsList)
+            throw new InvalidOperationException("MEMBER? requires a list as second argument");
+
+        var list = listVal.AsList();
+
+        // Check if item is in the list (deep equality)
+        foreach (var element in list)
+        {
+            if (ValuesEqual(element, item))
+                return new NumberValue(1); // True
+        }
+
+        return new NumberValue(0); // False
+    }
+
+    private Value EvaluatePosition(Value item, Value listVal)
+    {
+        if (!listVal.IsList)
+            throw new InvalidOperationException("POSITION requires a list as second argument");
+
+        var list = listVal.AsList();
+
+        // Find index of item in list (1-based)
+        for (int i = 0; i < list.Count; i++)
+        {
+            if (ValuesEqual(list[i], item))
+                return new NumberValue(i + 1); // 1-based index
+        }
+
+        return new NumberValue(0); // Not found
+    }
+
+    // Helper method to compare values for equality (handles nested lists)
+    private bool ValuesEqual(Value v1, Value v2)
+    {
+        if (v1.IsNumber && v2.IsNumber)
+            return v1.AsNumber() == v2.AsNumber();
+
+        if (v1.IsList && v2.IsList)
+        {
+            var list1 = v1.AsList();
+            var list2 = v2.AsList();
+
+            if (list1.Count != list2.Count)
+                return false;
+
+            for (int i = 0; i < list1.Count; i++)
+            {
+                if (!ValuesEqual(list1[i], list2[i]))
+                    return false;
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    // Helper to extract procedure name from AST node (for higher-order functions)
+    private string GetProcedureName(AstNode node)
+    {
+        // If it's a word/variable node, get its name
+        if (node is VariableNode varNode)
+            return varNode.Name;
+
+        // If it's evaluated to a word somehow, try to get the string representation
+        throw new InvalidOperationException("Higher-order functions require a procedure name as first argument");
+    }
+
+    // MAP: Apply procedure to each element of list
+    private Value EvaluateMap(string procName, Value listVal)
+    {
+        if (!listVal.IsList)
+            throw new InvalidOperationException("MAP requires a list as second argument");
+
+        if (!_context.TryGetProcedure(procName, out var procedure))
+            throw new InvalidOperationException($"MAP: procedure '{procName}' not defined");
+
+        var list = listVal.AsList();
+        var result = new List<Value>();
+
+        foreach (var item in list)
+        {
+            // Create local scope with item as argument
+            var localScope = new Dictionary<string, Value>(StringComparer.OrdinalIgnoreCase);
+            if (procedure.Parameters.Count > 0)
+            {
+                localScope[procedure.Parameters[0]] = item;
+            }
+
+            _context.PushScope(localScope);
+            try
+            {
+                Value itemResult = new NumberValue(0);
+                foreach (var statement in procedure.Body)
+                {
+                    Execute(statement);
+                }
+                // If procedure didn't OUTPUT, result is 0
+                result.Add(itemResult);
+            }
+            catch (OutputException ex)
+            {
+                result.Add(ex.Value);
+            }
+            finally
+            {
+                _context.PopScope();
+            }
+        }
+
+        return new ListValue(result);
+    }
+
+    // FILTER: Keep only elements where predicate returns true
+    private Value EvaluateFilter(string procName, Value listVal)
+    {
+        if (!listVal.IsList)
+            throw new InvalidOperationException("FILTER requires a list as second argument");
+
+        if (!_context.TryGetProcedure(procName, out var procedure))
+            throw new InvalidOperationException($"FILTER: procedure '{procName}' not defined");
+
+        var list = listVal.AsList();
+        var result = new List<Value>();
+
+        foreach (var item in list)
+        {
+            // Create local scope with item as argument
+            var localScope = new Dictionary<string, Value>(StringComparer.OrdinalIgnoreCase);
+            if (procedure.Parameters.Count > 0)
+            {
+                localScope[procedure.Parameters[0]] = item;
+            }
+
+            _context.PushScope(localScope);
+            bool keep = false;
+            try
+            {
+                foreach (var statement in procedure.Body)
+                {
+                    Execute(statement);
+                }
+                // If procedure didn't OUTPUT, default is 0 (false)
+            }
+            catch (OutputException ex)
+            {
+                keep = ex.Value.IsNumber && ex.Value.AsNumber() != 0;
+            }
+            finally
+            {
+                _context.PopScope();
+            }
+
+            if (keep)
+            {
+                result.Add(item);
+            }
+        }
+
+        return new ListValue(result);
+    }
+
+    // REDUCE: Reduce list to single value using binary operation
+    private Value EvaluateReduce(string procName, Value listVal)
+    {
+        if (!listVal.IsList)
+            throw new InvalidOperationException("REDUCE requires a list as second argument");
+
+        var list = listVal.AsList();
+        if (list.Count == 0)
+            throw new InvalidOperationException("REDUCE requires a non-empty list");
+
+        if (!_context.TryGetProcedure(procName, out var procedure))
+            throw new InvalidOperationException($"REDUCE: procedure '{procName}' not defined");
+
+        if (procedure.Parameters.Count < 2)
+            throw new InvalidOperationException("REDUCE: procedure must take 2 parameters");
+
+        Value accumulator = list[0];
+        for (int i = 1; i < list.Count; i++)
+        {
+            // Create local scope with accumulator and current item
+            var localScope = new Dictionary<string, Value>(StringComparer.OrdinalIgnoreCase);
+            localScope[procedure.Parameters[0]] = accumulator;
+            localScope[procedure.Parameters[1]] = list[i];
+
+            _context.PushScope(localScope);
+            try
+            {
+                foreach (var statement in procedure.Body)
+                {
+                    Execute(statement);
+                }
+                // If procedure didn't OUTPUT, accumulator stays the same
+            }
+            catch (OutputException ex)
+            {
+                accumulator = ex.Value;
+            }
+            finally
+            {
+                _context.PopScope();
+            }
+        }
+
+        return accumulator;
+    }
+
+    // APPLY: Call procedure with list of arguments
+    private Value EvaluateApply(string procName, Value argsListVal)
+    {
+        if (!argsListVal.IsList)
+            throw new InvalidOperationException("APPLY requires a list as second argument");
+
+        var argsList = argsListVal.AsList();
+
+        if (!_context.TryGetProcedure(procName, out var procedure))
+            throw new InvalidOperationException($"APPLY: procedure '{procName}' not defined");
+
+        if (procedure.Parameters.Count != argsList.Count)
+            throw new InvalidOperationException(
+                $"APPLY: procedure '{procName}' expects {procedure.Parameters.Count} arguments but got {argsList.Count}");
+
+        // Create local scope with arguments bound to parameters
+        var localScope = new Dictionary<string, Value>(StringComparer.OrdinalIgnoreCase);
+        for (int i = 0; i < procedure.Parameters.Count; i++)
+        {
+            localScope[procedure.Parameters[i]] = argsList[i];
+        }
+
+        _context.PushScope(localScope);
+        Value result = new NumberValue(0);
+        try
+        {
+            foreach (var statement in procedure.Body)
+            {
+                Execute(statement);
+            }
+            // If procedure didn't OUTPUT, result is 0
+        }
+        catch (OutputException ex)
+        {
+            result = ex.Value;
+        }
+        finally
+        {
+            _context.PopScope();
+        }
+
+        return result;
     }
 
     private Value EvaluateUnaryOp(UnaryOpNode node)

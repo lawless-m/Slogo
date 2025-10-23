@@ -741,6 +741,78 @@ END
 ;PRINT TESTLOCAL4 10
 ; Should print 55
 
+; Test 77: MEMBER? - check if item in list
+;PRINT MEMBER? 3 [1 2 3 4 5]
+;PRINT MEMBER? 10 [1 2 3 4 5]
+;PRINT MEMBER? [2 3] [[1 2] [2 3] [3 4]]
+; Should print 1, 0, 1
+
+; Test 78: POSITION - find index of item
+;PRINT POSITION 3 [10 20 30 40]
+;PRINT POSITION 10 [5 10 15 20]
+;PRINT POSITION 99 [1 2 3]
+; Should print 3, 2, 0 (0 means not found)
+
+; Test 79: MAP - apply procedure to each element
+;TO DOUBLE :n
+;  OUTPUT :n * 2
+;END
+;PRINT MAP "DOUBLE [1 2 3 4 5]
+; Should print [2 4 6 8 10]
+
+; Test 80: MAP with lists
+;TO SUMSQUARES :n
+;  OUTPUT (:n * :n) + :n
+;END
+;PRINT MAP "SUMSQUARES [1 2 3 4]
+; Should print [2 6 12 20] (1+1=2, 4+2=6, 9+3=12, 16+4=20)
+
+; Test 81: FILTER - keep only elements matching predicate
+;TO EVEN? :n
+;  OUTPUT (:n MOD 2) = 0
+;END
+;PRINT FILTER "EVEN? [1 2 3 4 5 6 7 8 9 10]
+; Should print [2 4 6 8 10]
+
+; Test 82: FILTER with custom predicate
+;TO GREATERTHAN5? :n
+;  OUTPUT :n > 5
+;END
+;PRINT FILTER "GREATERTHAN5? [1 3 5 7 9 11]
+; Should print [7 9 11]
+
+; Test 83: REDUCE - fold/accumulate operation
+;TO SUM :a :b
+;  OUTPUT :a + :b
+;END
+;PRINT REDUCE "SUM [1 2 3 4 5]
+; Should print 15
+
+; Test 84: REDUCE with multiplication
+;TO MULTIPLY :a :b
+;  OUTPUT :a * :b
+;END
+;PRINT REDUCE "MULTIPLY [1 2 3 4 5]
+; Should print 120 (factorial of 5)
+
+; Test 85: APPLY - call procedure with list of arguments
+;TO ADD3 :a :b :c
+;  OUTPUT :a + :b + :c
+;END
+;PRINT APPLY "ADD3 [10 20 30]
+; Should print 60
+
+; Test 86: Complex higher-order function composition
+;TO SQUARE :n
+;  OUTPUT :n * :n
+;END
+;MAKE "nums [1 2 3 4 5]
+;MAKE "evens FILTER "EVEN? :nums
+;MAKE "squares MAP "SQUARE :evens
+;PRINT :squares
+;PRINT REDUCE "SUM :squares
+; Should print [4 16 36] then 56
+
 ; ====================
 ; Feature Checklist
 ; ====================
@@ -768,6 +840,8 @@ END
 ; ✓ POWER/POW (exponentiation function)
 ; ✓ WHILE loops (conditional iteration)
 ; ✓ Lists and list operations (literals, FIRST, LAST, BUTFIRST, BUTLAST, ITEM, COUNT, EMPTY?, FPUT, LPUT, LIST, SENTENCE)
+; ✓ List search operations (MEMBER?, MEMBERP, POSITION)
+; ✓ Higher-order functions (MAP, FILTER, REDUCE, APPLY)
 ; ✓ FOR loops (counted iteration with variable)
 ; ✓ LOCAL variables (local scope declarations)
 

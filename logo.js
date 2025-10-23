@@ -622,6 +622,233 @@ class LogoInterpreter {
             return { value: result, nextIndex: i };
         }
 
+        // MEMBER? / MEMBERP function (two arguments: item, list) - check membership
+        if (func === 'MEMBER?' || func === 'MEMBERP') {
+            const { value: item, nextIndex: afterItem } = this.parsePrimary(tokens, index + 1);
+            const { value: list, nextIndex } = this.parsePrimary(tokens, afterItem);
+            if (!Array.isArray(list)) {
+                throw new Error('MEMBER? requires a list as second argument');
+            }
+            // Check if item is in the list (deep equality for nested lists)
+            const found = list.some(element => {
+                if (Array.isArray(element) && Array.isArray(item)) {
+                    return JSON.stringify(element) === JSON.stringify(item);
+                }
+                return element === item;
+            });
+            return { value: found ? 1 : 0, nextIndex };
+        }
+
+        // POSITION function (two arguments: item, list) - find index (1-based, or 0 if not found)
+        if (func === 'POSITION') {
+            const { value: item, nextIndex: afterItem } = this.parsePrimary(tokens, index + 1);
+            const { value: list, nextIndex } = this.parsePrimary(tokens, afterItem);
+            if (!Array.isArray(list)) {
+                throw new Error('POSITION requires a list as second argument');
+            }
+            // Find index of item in list (1-based)
+            for (let i = 0; i < list.length; i++) {
+                const element = list[i];
+                if (Array.isArray(element) && Array.isArray(item)) {
+                    if (JSON.stringify(element) === JSON.stringify(item)) {
+                        return { value: i + 1, nextIndex };
+                    }
+                } else if (element === item) {
+                    return { value: i + 1, nextIndex };
+                }
+            }
+            return { value: 0, nextIndex }; // Not found
+        }
+
+        // MAP function (two arguments: procedure name, list) - apply procedure to each element
+        if (func === 'MAP') {
+            const procNameToken = tokens[index + 1];
+            const procName = procNameToken.startsWith('"')
+                ? procNameToken.substring(1).toUpperCase()
+                : procNameToken.toUpperCase();
+
+            const { value: list, nextIndex } = this.parsePrimary(tokens, index + 2);
+            if (!Array.isArray(list)) {
+                throw new Error('MAP requires a list as second argument');
+            }
+
+            const proc = this.procedures[procName];
+            if (!proc) {
+                throw new Error(`MAP: procedure '${procName}' not defined`);
+            }
+
+            const result = [];
+            for (const item of list) {
+                // Push scope with item as argument
+                const localScope = {};
+                if (proc.params && proc.params.length > 0) {
+                    localScope[proc.params[0]] = item;
+                }
+                this.pushScope(localScope);
+
+                let itemResult = 0;
+                try {
+                    // Execute procedure synchronously
+                    this.executeProcedureSync(proc.body);
+                } catch (error) {
+                    if (error instanceof OutputException) {
+                        itemResult = error.value;
+                    } else {
+                        this.popScope();
+                        throw error;
+                    }
+                }
+
+                this.popScope();
+                result.push(itemResult);
+            }
+
+            return { value: result, nextIndex };
+        }
+
+        // FILTER function (two arguments: predicate procedure name, list) - filter by predicate
+        if (func === 'FILTER') {
+            const procNameToken = tokens[index + 1];
+            const procName = procNameToken.startsWith('"')
+                ? procNameToken.substring(1).toUpperCase()
+                : procNameToken.toUpperCase();
+
+            const { value: list, nextIndex } = this.parsePrimary(tokens, index + 2);
+            if (!Array.isArray(list)) {
+                throw new Error('FILTER requires a list as second argument');
+            }
+
+            const proc = this.procedures[procName];
+            if (!proc) {
+                throw new Error(`FILTER: procedure '${procName}' not defined`);
+            }
+
+            const result = [];
+            for (const item of list) {
+                // Push scope with item as argument
+                const localScope = {};
+                if (proc.params && proc.params.length > 0) {
+                    localScope[proc.params[0]] = item;
+                }
+                this.pushScope(localScope);
+
+                let keep = false;
+                try {
+                    // Execute procedure synchronously
+                    this.executeProcedureSync(proc.body);
+                } catch (error) {
+                    if (error instanceof OutputException) {
+                        keep = error.value !== 0;
+                    } else {
+                        this.popScope();
+                        throw error;
+                    }
+                }
+
+                this.popScope();
+                if (keep) {
+                    result.push(item);
+                }
+            }
+
+            return { value: result, nextIndex };
+        }
+
+        // REDUCE function (two arguments: binary procedure name, list) - reduce to single value
+        if (func === 'REDUCE') {
+            const procNameToken = tokens[index + 1];
+            const procName = procNameToken.startsWith('"')
+                ? procNameToken.substring(1).toUpperCase()
+                : procNameToken.toUpperCase();
+
+            const { value: list, nextIndex } = this.parsePrimary(tokens, index + 2);
+            if (!Array.isArray(list)) {
+                throw new Error('REDUCE requires a list as second argument');
+            }
+            if (list.length === 0) {
+                throw new Error('REDUCE requires a non-empty list');
+            }
+
+            const proc = this.procedures[procName];
+            if (!proc) {
+                throw new Error(`REDUCE: procedure '${procName}' not defined`);
+            }
+            if (!proc.params || proc.params.length < 2) {
+                throw new Error('REDUCE: procedure must take 2 parameters');
+            }
+
+            let accumulator = list[0];
+            for (let i = 1; i < list.length; i++) {
+                // Push scope with accumulator and current item as arguments
+                const localScope = {};
+                localScope[proc.params[0]] = accumulator;
+                localScope[proc.params[1]] = list[i];
+                this.pushScope(localScope);
+
+                try {
+                    // Execute procedure synchronously
+                    this.executeProcedureSync(proc.body);
+                } catch (error) {
+                    if (error instanceof OutputException) {
+                        accumulator = error.value;
+                    } else {
+                        this.popScope();
+                        throw error;
+                    }
+                }
+
+                this.popScope();
+            }
+
+            return { value: accumulator, nextIndex };
+        }
+
+        // APPLY function (two arguments: procedure name, list of arguments) - call procedure with args
+        if (func === 'APPLY') {
+            const procNameToken = tokens[index + 1];
+            const procName = procNameToken.startsWith('"')
+                ? procNameToken.substring(1).toUpperCase()
+                : procNameToken.toUpperCase();
+
+            const { value: argsList, nextIndex } = this.parsePrimary(tokens, index + 2);
+            if (!Array.isArray(argsList)) {
+                throw new Error('APPLY requires a list as second argument');
+            }
+
+            const proc = this.procedures[procName];
+            if (!proc) {
+                throw new Error(`APPLY: procedure '${procName}' not defined`);
+            }
+            if (proc.params && argsList.length !== proc.params.length) {
+                throw new Error(`APPLY: procedure '${procName}' expects ${proc.params.length} arguments but got ${argsList.length}`);
+            }
+
+            // Push scope with arguments bound to parameters
+            const localScope = {};
+            if (proc.params) {
+                for (let i = 0; i < proc.params.length; i++) {
+                    localScope[proc.params[i]] = argsList[i];
+                }
+            }
+            this.pushScope(localScope);
+
+            let result = 0;
+            try {
+                // Execute procedure synchronously
+                this.executeProcedureSync(proc.body);
+            } catch (error) {
+                if (error instanceof OutputException) {
+                    result = error.value;
+                } else {
+                    this.popScope();
+                    throw error;
+                }
+            }
+
+            this.popScope();
+            return { value: result, nextIndex };
+        }
+
         // Variable reference (:varname)
         if (token.startsWith(':')) {
             const varName = token.substring(1).toUpperCase();

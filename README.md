@@ -271,6 +271,55 @@ Lists are first-class values that can be stored in variables and passed to proce
 | `LPUT item list` | Add to end | `LPUT 4 [1 2 3]` | [1 2 3 4] |
 | `LIST item1 item2` | Create list | `LIST 10 20` | [10 20] |
 | `SENTENCE list1 list2` or `SE list1 list2` | Flatten/concatenate | `SE [1 2] [3 4]` | [1 2 3 4] |
+| `MEMBER? item list` or `MEMBERP item list` | Check if item in list | `MEMBER? 3 [1 2 3]` | 1 (true) |
+| `POSITION item list` | Find 1-based index of item | `POSITION 30 [10 20 30]` | 3 (or 0 if not found) |
+
+### Higher-Order Functions
+
+Higher-order functions take procedure names and apply them to lists, enabling functional programming patterns.
+
+| Function | Description | Example |
+|----------|-------------|---------|
+| `MAP "proc list` | Apply procedure to each element | `MAP "DOUBLE [1 2 3]` → `[2 4 6]` |
+| `FILTER "pred list` | Keep elements where predicate is true | `FILTER "EVEN? [1 2 3 4]` → `[2 4]` |
+| `REDUCE "op list` | Reduce list to single value | `REDUCE "SUM [1 2 3 4]` → `10` |
+| `APPLY "proc arglist` | Call procedure with list of arguments | `APPLY "ADD3 [10 20 30]` → `60` |
+
+**Higher-Order Function Examples:**
+```logo
+; MAP - transform each element
+TO SQUARE :n
+  OUTPUT :n * :n
+END
+PRINT MAP "SQUARE [1 2 3 4 5]  ; [1 4 9 16 25]
+
+; FILTER - select elements
+TO POSITIVE? :n
+  OUTPUT :n > 0
+END
+PRINT FILTER "POSITIVE? [-2 -1 0 1 2]  ; [1 2]
+
+; REDUCE - accumulate
+TO MULTIPLY :a :b
+  OUTPUT :a * :b
+END
+PRINT REDUCE "MULTIPLY [1 2 3 4 5]  ; 120 (factorial)
+
+; APPLY - dynamic procedure calls
+TO ADD3 :x :y :z
+  OUTPUT :x + :y + :z
+END
+PRINT APPLY "ADD3 [10 20 30]  ; 60
+
+; Composition
+MAKE "nums [1 2 3 4 5 6 7 8 9 10]
+TO EVEN? :n
+  OUTPUT (:n MOD 2) = 0
+END
+MAKE "evens FILTER "EVEN? :nums
+MAKE "squares MAP "SQUARE :evens
+PRINT REDUCE "SUM :squares  ; 220
+```
 
 **List Examples:**
 ```logo
