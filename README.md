@@ -53,7 +53,7 @@ REPEAT 4 [
 | `BACKWARD n` | `BK n`, `BACK n` | Move backward n pixels | `BACKWARD 50` |
 | `LEFT n` | `LT n` | Turn left n degrees | `LEFT 90` |
 | `RIGHT n` | `RT n` | Turn right n degrees | `RIGHT 45` |
-| `GOTO x y` | `SETXY x y` | Move to position (x, y) | `GOTO 100 50` |
+| `SETXY x y` | | Move to position (x, y) | `SETXY 100 50` |
 | `SETX n` | | Set X position | `SETX 100` |
 | `SETY n` | | Set Y position | `SETY 50` |
 | `SETHEADING n` | `SETH n` | Set heading (0=right, 90=up) | `SETHEADING 90` |
@@ -134,7 +134,7 @@ END
 ; Now use it
 STAR 100
 PENUP
-GOTO 150 0
+SETXY 150 0
 PENDOWN
 STAR 50
 ```
@@ -147,13 +147,13 @@ CIRCLE 50
 
 ; Draw a square
 PENUP
-GOTO 100 0
+SETXY 100 0
 PENDOWN
 SQUARE 80
 
 ; Draw a rectangle
 PENUP
-GOTO -100 0
+SETXY -100 0
 PENDOWN
 BOX 120 60
 ```
@@ -311,7 +311,7 @@ This coordinate system matches standard mathematical conventions and the C# axi 
 - **Variables**: Use `MAKE "varname value` to create variables and `:varname` to reference them
 - **Procedure Parameters**: Define procedures with parameters like `TO SQUARE :size`
 - **Built-in Shapes**: CIRCLE, BOX, and SQUARE commands for common shapes
-- **Enhanced Movement**: GOTO, SETX, SETY commands for precise positioning
+- **Enhanced Movement**: SETXY, SETX, SETY commands for precise positioning
 - **Standard Heading**: 0° = right, 90° = up (mathematical convention)
 
 ## Browser Compatibility
@@ -336,7 +336,7 @@ This JavaScript implementation is designed to be compatible with the C# Avalonia
 - ✅ Variable support with MAKE and :varname syntax
 - ✅ Procedure definitions with parameters (TO name :param1 :param2 ... END)
 - ✅ Built-in shape commands (CIRCLE, BOX, SQUARE)
-- ✅ GOTO, SETX, SETY commands
+- ✅ SETXY, SETX, SETY commands
 - ✅ Turtle graphics with SVG rendering
 
 ## Future Enhancements

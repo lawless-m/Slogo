@@ -300,8 +300,7 @@ class LogoInterpreter {
                         this.right(this.evaluateExpression(tokens[++i]));
                         break;
 
-                    case 'GOTO':
-                    case 'SETXY': // Keep SETXY for backward compatibility
+                    case 'SETXY':
                         const gx = this.evaluateExpression(tokens[++i]);
                         const gy = this.evaluateExpression(tokens[++i]);
                         this.goTo(gx, gy);
@@ -541,35 +540,35 @@ END
 
 ; 3. Built-in shapes - SQUARE
 PENUP
-GOTO -200 150
+SETXY -200 150
 PENDOWN
 SETPENCOLOR 255 0 0
 SQUARE :size
 
 ; 4. Built-in shapes - BOX
 PENUP
-GOTO -200 -50
+SETXY -200 -50
 PENDOWN
 SETPENCOLOR 0 128 0
 BOX 100 60
 
 ; 5. Built-in shapes - CIRCLE
 PENUP
-GOTO 0 150
+SETXY 0 150
 PENDOWN
 SETPENCOLOR 0 0 255
 CIRCLE :radius
 
 ; 6. Use procedure with variable
 PENUP
-GOTO 100 150
+SETXY 100 150
 PENDOWN
 SETPENCOLOR 255 165 0
 HEXAGON 50
 
 ; 7. Star using procedure and variable
 PENUP
-GOTO 100 -50
+SETXY 100 -50
 PENDOWN
 SETPENCOLOR 128 0 128
 PENSIZE 2
@@ -578,7 +577,7 @@ STAR :starsize
 
 ; 8. Flower pattern with circles
 PENUP
-GOTO 0 -100
+SETXY 0 -100
 PENDOWN
 SETPENCOLOR 255 100 200
 PENSIZE 1
