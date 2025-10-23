@@ -303,6 +303,20 @@ public class Interpreter
         var turtle = _context.Turtle;
         var queryName = node.QueryName.ToLower();
 
+        // PENCOLOR returns a list [r g b]
+        if (queryName == "pencolor")
+        {
+            var (r, g, b) = turtle.PenColor;
+            var colorList = new List<Value>
+            {
+                new NumberValue(r),
+                new NumberValue(g),
+                new NumberValue(b)
+            };
+            return new ListValue(colorList);
+        }
+
+        // Other queries return numbers
         var result = queryName switch
         {
             "xcor" => turtle.X,
@@ -369,6 +383,23 @@ public class Interpreter
             case "pendown":
             case "pd":
                 turtle.PenDown();
+                break;
+
+            case "setpensize":
+            case "pensize":
+                if (command.Arguments.Count > 0)
+                    turtle.SetPenSize(EvaluateExpression(command.Arguments[0]).AsNumber());
+                break;
+
+            case "setpencolor":
+            case "setpc":
+                if (command.Arguments.Count >= 3)
+                {
+                    var r = EvaluateExpression(command.Arguments[0]).AsNumber();
+                    var g = EvaluateExpression(command.Arguments[1]).AsNumber();
+                    var b = EvaluateExpression(command.Arguments[2]).AsNumber();
+                    turtle.SetPenColor(r, g, b);
+                }
                 break;
 
             case "home":

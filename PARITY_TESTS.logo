@@ -554,6 +554,57 @@ END
 ;]
 ; Should draw a shape with sides 20, 30, 40, 50
 
+; Test 60: PENSIZE query and SETPENSIZE command
+;CLEAR
+;HOME
+;MAKE "oldSize PENSIZE
+;PRINT :oldSize           ; Should print default pen size (2)
+;SETPENSIZE 5
+;MAKE "newSize PENSIZE
+;PRINT :newSize           ; Should print 5
+;FORWARD 100              ; Draw with thick pen
+;SETPENSIZE 1
+;RIGHT 90
+;FORWARD 100              ; Draw with thin pen
+
+; Test 61: PENCOLOR query
+;CLEAR
+;HOME
+;MAKE "color PENCOLOR
+;PRINT :color             ; Should print [0 0 0] (black)
+;PRINT FIRST :color       ; Should print 0
+;PRINT COUNT :color       ; Should print 3
+
+; Test 62: SETPENCOLOR then query
+;SETPENCOLOR 255 0 0      ; Set to red
+;MAKE "red PENCOLOR
+;PRINT :red               ; Should print [255 0 0]
+;FORWARD 100
+;SETPENCOLOR 0 255 0      ; Set to green
+;RIGHT 90
+;FORWARD 100
+
+; Test 63: Using PENCOLOR in expressions
+;SETPENCOLOR 128 64 32
+;MAKE "color PENCOLOR
+;MAKE "r ITEM 1 :color
+;MAKE "g ITEM 2 :color
+;MAKE "b ITEM 3 :color
+;IF :r = 128 [FORWARD 50]
+;IF :g = 64 [FORWARD 50]
+
+; Test 64: Changing pen size dynamically
+;CLEAR
+;HOME
+;MAKE "size 1
+;REPEAT 5 [
+;  SETPENSIZE :size
+;  FORWARD 50
+;  RIGHT 90
+;  MAKE "size :size + 2
+;]
+; Should draw with increasing pen thickness
+
 ; ====================
 ; Feature Checklist
 ; ====================
@@ -573,7 +624,8 @@ END
 ; ✓ IF/IFELSE conditionals
 ; ✓ Comparison operators (=, <, >, <=, >=, <>)
 ; ✓ Logical operators (AND, OR, NOT)
-; ✓ Query functions (XCOR, YCOR, HEADING, PENDOWN?, PENSIZE)
+; ✓ Query functions (XCOR, YCOR, HEADING, PENDOWN?, PENSIZE, PENCOLOR)
+; ✓ Pen control (PENUP, PENDOWN, SETPENSIZE, SETPENCOLOR)
 ; ✓ OUTPUT (return values from procedures)
 ; ✓ STOP (exit procedure without returning value)
 ; ✓ PRINT/PR (output values to console)
@@ -588,6 +640,5 @@ END
 ; ✗ FILL command
 ; ✗ ARC command
 ; ✗ TEXT/LABEL commands
-; ✗ PENCOLOR/PENSIZE commands (setters)
 ; ✗ FOR loops
 ; ✗ Local variables (LOCAL command)

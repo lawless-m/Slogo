@@ -8,6 +8,8 @@ public class Turtle
     private Point _position;
     private double _heading; // in degrees, 0 = right, 90 = up
     private bool _penDown;
+    private double _penSize;
+    private (double R, double G, double B) _penColor; // RGB values 0-255
     private readonly List<List<Point>> _paths;
     private List<Point>? _currentPath;
 
@@ -16,6 +18,8 @@ public class Turtle
         _position = new Point(0, 0);
         _heading = 90; // Start facing up (like Logo)
         _penDown = true;
+        _penSize = 2.0;
+        _penColor = (0, 0, 0); // Black
         _paths = new List<List<Point>>();
         _currentPath = new List<Point>();
         _currentPath.Add(_position);
@@ -27,6 +31,16 @@ public class Turtle
     public Point Position => _position;
 
     /// <summary>
+    /// Current X coordinate
+    /// </summary>
+    public double X => _position.X;
+
+    /// <summary>
+    /// Current Y coordinate
+    /// </summary>
+    public double Y => _position.Y;
+
+    /// <summary>
     /// Current heading in degrees (0 = right, 90 = up, 180 = left, 270 = down)
     /// </summary>
     public double Heading => _heading;
@@ -35,6 +49,21 @@ public class Turtle
     /// Whether the pen is currently down
     /// </summary>
     public bool IsPenDown => _penDown;
+
+    /// <summary>
+    /// Whether the pen is currently down (alias for IsPenDown)
+    /// </summary>
+    public bool PenDown => _penDown;
+
+    /// <summary>
+    /// Current pen size (width)
+    /// </summary>
+    public double PenSize => _penSize;
+
+    /// <summary>
+    /// Current pen color as RGB tuple (R, G, B) with values 0-255
+    /// </summary>
+    public (double R, double G, double B) PenColor => _penColor;
 
     /// <summary>
     /// Lifts the pen up (stops drawing)
@@ -192,6 +221,22 @@ public class Turtle
     public void Square(double size)
     {
         Box(size, size);
+    }
+
+    /// <summary>
+    /// Sets the pen size (width)
+    /// </summary>
+    public void SetPenSize(double size)
+    {
+        _penSize = size;
+    }
+
+    /// <summary>
+    /// Sets the pen color using RGB values (0-255)
+    /// </summary>
+    public void SetPenColor(double r, double g, double b)
+    {
+        _penColor = (r, g, b);
     }
 
     /// <summary>

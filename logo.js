@@ -35,6 +35,7 @@ class LogoInterpreter {
         this.heading = 90; // Start facing up like C# version (0=right, 90=up)
         this.penDown = true;
         this.penColor = '#000000';
+        this.penColorRGB = [0, 0, 0]; // Store RGB values for PENCOLOR query
         this.penSize = 2;
         this.turtleVisible = true;
         this.variables = {}; // Variable storage
@@ -421,7 +422,7 @@ class LogoInterpreter {
         }
 
         // Query functions (no arguments)
-        if (['XCOR', 'YCOR', 'HEADING', 'PENDOWN?', 'PENDOWNP', 'PENSIZE'].includes(func)) {
+        if (['XCOR', 'YCOR', 'HEADING', 'PENDOWN?', 'PENDOWNP', 'PENSIZE', 'PENCOLOR'].includes(func)) {
             let result;
             switch (func) {
                 case 'XCOR':
@@ -439,6 +440,9 @@ class LogoInterpreter {
                     break;
                 case 'PENSIZE':
                     result = this.penSize;
+                    break;
+                case 'PENCOLOR':
+                    result = this.penColorRGB.slice(); // Return a copy of the RGB array
                     break;
             }
             return { value: result, nextIndex: index + 1 };
@@ -734,6 +738,7 @@ class LogoInterpreter {
 
     setPenColor(r, g, b) {
         this.penColor = `rgb(${r}, ${g}, ${b})`;
+        this.penColorRGB = [r, g, b]; // Store for PENCOLOR query
     }
 
     hideTurtle() {

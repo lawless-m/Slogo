@@ -458,7 +458,7 @@ public class Parser
             }
 
             // Check if it's a query function (no arguments)
-            if (word is "xcor" or "ycor" or "heading" or "pendown?" or "pendownp" or "pensize")
+            if (word is "xcor" or "ycor" or "heading" or "pendown?" or "pendownp" or "pensize" or "pencolor")
             {
                 Consume(); // query function name
                 return new QueryNode(word);
@@ -526,6 +526,8 @@ public class Parser
             "circle" => 1,
             "penup" or "pu" => 0,
             "pendown" or "pd" => 0,
+            "setpensize" or "pensize" => 1,
+            "setpencolor" or "setpc" => 3,
             "home" => 0,
             "clear" => 0,
             _ => 0 // Unknown commands might be procedure calls

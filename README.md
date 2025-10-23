@@ -213,6 +213,7 @@ Query functions return information about the turtle's current state:
 | `HEADING` | Current heading direction | Number (0-360) | `MAKE "dir HEADING` |
 | `PENDOWN?` or `PENDOWNP` | Pen state | 1 if down, 0 if up | `IF PENDOWN? [PENUP]` |
 | `PENSIZE` | Current pen size | Number | `MAKE "size PENSIZE` |
+| `PENCOLOR` | Current pen color | List [r g b] | `MAKE "color PENCOLOR` |
 
 ### Lists and List Operations
 
