@@ -214,6 +214,61 @@ Query functions return information about the turtle's current state:
 | `PENDOWN?` or `PENDOWNP` | Pen state | 1 if down, 0 if up | `IF PENDOWN? [PENUP]` |
 | `PENSIZE` | Current pen size | Number | `MAKE "size PENSIZE` |
 
+### Lists and List Operations
+
+Lists are first-class values that can be stored in variables and passed to procedures.
+
+| Operation | Description | Example | Returns |
+|-----------|-------------|---------|---------|
+| `[item1 item2 ...]` | List literal | `MAKE "nums [10 20 30]` | List |
+| `FIRST list` | Get first element | `FIRST [1 2 3]` | 1 |
+| `LAST list` | Get last element | `LAST [1 2 3]` | 3 |
+| `BUTFIRST list` or `BF list` | All but first | `BF [1 2 3]` | [2 3] |
+| `BUTLAST list` or `BL list` | All but last | `BL [1 2 3]` | [1 2] |
+| `ITEM n list` | Get nth element (1-indexed) | `ITEM 2 [10 20 30]` | 20 |
+| `COUNT list` | List length | `COUNT [1 2 3]` | 3 |
+| `EMPTY? list` | Check if empty | `EMPTY? []` | 1 (true) |
+| `FPUT item list` | Add to front | `FPUT 0 [1 2 3]` | [0 1 2 3] |
+| `LPUT item list` | Add to end | `LPUT 4 [1 2 3]` | [1 2 3 4] |
+| `LIST item1 item2` | Create list | `LIST 10 20` | [10 20] |
+| `SENTENCE list1 list2` or `SE list1 list2` | Flatten/concatenate | `SE [1 2] [3 4]` | [1 2 3 4] |
+
+**List Examples:**
+```logo
+; Store list in variable
+MAKE "nums [10 20 30 40 50]
+PRINT FIRST :nums          ; Prints 10
+PRINT ITEM 3 :nums         ; Prints 30
+PRINT COUNT :nums          ; Prints 5
+
+; Modify lists
+MAKE "short BUTFIRST :nums ; [20 30 40 50]
+MAKE "extended LPUT 60 :nums  ; [10 20 30 40 50 60]
+
+; Build list iteratively
+MAKE "result []
+MAKE "i 1
+WHILE :i <= 5 [
+  MAKE "result LPUT :i :result
+  MAKE "i :i + 1
+]
+PRINT :result              ; [1 2 3 4 5]
+
+; Recursive list processing
+TO SUMLIST :list
+  IF EMPTY? :list [OUTPUT 0]
+  OUTPUT (FIRST :list) + SUMLIST BUTFIRST :list
+END
+
+PRINT SUMLIST [10 20 30]  ; 60
+
+; Use lists for turtle graphics
+MAKE "path [50 100 75 125]
+FORWARD ITEM 1 :path       ; Forward 50
+RIGHT 90
+FORWARD ITEM 2 :path       ; Forward 100
+```
+
 **Examples:**
 ```logo
 ; Arithmetic in commands

@@ -410,7 +410,7 @@ public class Parser
         return ParsePrimary();
     }
 
-    // Primary expressions: numbers, variables, functions, parentheses
+    // Primary expressions: numbers, variables, functions, parentheses, lists
     private AstNode ParsePrimary()
     {
         // Parentheses
@@ -420,6 +420,12 @@ public class Parser
             var expr = ParseExpression();
             Consume(TokenType.RightParen); // )
             return expr;
+        }
+
+        // List literal [1 2 3]
+        if (Check(TokenType.LeftBracket))
+        {
+            return ParseListLiteral();
         }
 
         // Variable reference
@@ -468,6 +474,34 @@ public class Parser
                 return new BinaryOpNode("power", base_, exponent);
             }
 
+            // List functions - single argument
+            if (word is "first" or "last" or "butfirst" or "bf" or "butlast" or "bl" or "count" or "empty?" or "emptyp")
+            {
+                Consume(); // function name
+                var arg = ParsePrimary();
+                return new FunctionCallNode(word, arg);
+            }
+
+            // List functions - two arguments (ITEM, FPUT, LPUT)
+            if (word is "item" or "fput" or "lput")
+            {
+                Consume(); // function name
+                var arg1 = ParsePrimary();
+                var arg2 = ParsePrimary();
+                return new BinaryOpNode(word, arg1, arg2);
+            }
+
+            // List functions - variable arguments (LIST, SENTENCE/SE)
+            if (word is "list" or "sentence" or "se")
+            {
+                Consume(); // function name
+                // For simplicity, collect exactly 2 arguments
+                // TODO: Could be extended for variable number of arguments
+                var arg1 = ParsePrimary();
+                var arg2 = ParsePrimary();
+                return new BinaryOpNode(word, arg1, arg2);
+            }
+
             // Otherwise could be a procedure call
             return ParseCommand();
         }
@@ -507,5 +541,19 @@ public class Parser
                "penup" or "pu" or "pendown" or "pd" or
                "setheading" or "seth" or "setxy" or "setx" or "sety" or
                "home" or "clear" or "box" or "square" or "circle";
+    }
+
+    private AstNode ParseListLiteral()
+    {
+        Consume(TokenType.LeftBracket); // [
+        var elements = new List<AstNode>();
+
+        while (!Check(TokenType.RightBracket) && !Check(TokenType.End))
+        {
+            elements.Add(ParseExpression());
+        }
+
+        Consume(TokenType.RightBracket); // ]
+        return new ListNode(elements);
     }
 }

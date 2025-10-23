@@ -116,8 +116,23 @@ public class Interpreter
     {
         var leftVal = EvaluateExpression(node.Left);
         var rightVal = EvaluateExpression(node.Right);
+        var op = node.Operator.ToLower();
 
-        // Binary operators work on numbers
+        // List functions (two arguments)
+        if (op is "item" or "fput" or "lput" or "list" or "sentence" or "se")
+        {
+            return op switch
+            {
+                "item" => EvaluateItem(leftVal, rightVal),
+                "fput" => EvaluateFPut(leftVal, rightVal),
+                "lput" => EvaluateLPut(leftVal, rightVal),
+                "list" => new ListValue(new List<Value> { leftVal, rightVal }),
+                "sentence" or "se" => EvaluateSentence(leftVal, rightVal),
+                _ => throw new InvalidOperationException($"Unknown list operation: {node.Operator}")
+            };
+        }
+
+        // Arithmetic and logical operators work on numbers
         if (!leftVal.IsNumber || !rightVal.IsNumber)
         {
             throw new InvalidOperationException($"Operator {node.Operator} requires numeric operands");
@@ -126,7 +141,7 @@ public class Interpreter
         var left = leftVal.AsNumber();
         var right = rightVal.AsNumber();
 
-        var result = node.Operator.ToLower() switch
+        var result = op switch
         {
             "+" => left + right,
             "-" => left - right,
@@ -149,6 +164,64 @@ public class Interpreter
         };
 
         return new NumberValue(result);
+    }
+
+    private Value EvaluateItem(Value indexVal, Value listVal)
+    {
+        if (!indexVal.IsNumber)
+            throw new InvalidOperationException("ITEM: index must be a number");
+        if (!listVal.IsList)
+            throw new InvalidOperationException("ITEM: second argument must be a list");
+
+        var list = listVal.AsList();
+        var index = (int)indexVal.AsNumber() - 1; // Convert to 0-indexed
+
+        if (index < 0 || index >= list.Count)
+            throw new InvalidOperationException($"ITEM: index {index + 1} out of bounds for list of length {list.Count}");
+
+        return list[index];
+    }
+
+    private Value EvaluateFPut(Value itemVal, Value listVal)
+    {
+        if (!listVal.IsList)
+            throw new InvalidOperationException("FPUT: second argument must be a list");
+
+        var list = listVal.AsList();
+        var newList = new List<Value> { itemVal };
+        newList.AddRange(list);
+
+        return new ListValue(newList);
+    }
+
+    private Value EvaluateLPut(Value itemVal, Value listVal)
+    {
+        if (!listVal.IsList)
+            throw new InvalidOperationException("LPUT: second argument must be a list");
+
+        var list = listVal.AsList();
+        var newList = new List<Value>(list) { itemVal };
+
+        return new ListValue(newList);
+    }
+
+    private Value EvaluateSentence(Value val1, Value val2)
+    {
+        var result = new List<Value>();
+
+        // Flatten first argument
+        if (val1.IsList)
+            result.AddRange(val1.AsList());
+        else
+            result.Add(val1);
+
+        // Flatten second argument
+        if (val2.IsList)
+            result.AddRange(val2.AsList());
+        else
+            result.Add(val2);
+
+        return new ListValue(result);
     }
 
     private Value EvaluateUnaryOp(UnaryOpNode node)
@@ -176,14 +249,37 @@ public class Interpreter
     private Value EvaluateFunctionCall(FunctionCallNode node)
     {
         var argVal = EvaluateExpression(node.Argument);
+        var funcName = node.FunctionName.ToLower();
 
+        // List functions
+        if (funcName is "first" or "last" or "butfirst" or "bf" or "butlast" or "bl" or "count" or "empty?" or "emptyp")
+        {
+            if (!argVal.IsList)
+            {
+                throw new InvalidOperationException($"Function {node.FunctionName} requires a list argument");
+            }
+
+            var list = argVal.AsList();
+
+            return funcName switch
+            {
+                "first" => list.Count > 0 ? list[0] : throw new InvalidOperationException("FIRST: list is empty"),
+                "last" => list.Count > 0 ? list[^1] : throw new InvalidOperationException("LAST: list is empty"),
+                "butfirst" or "bf" => new ListValue(list.Skip(1).ToList()),
+                "butlast" or "bl" => new ListValue(list.Take(list.Count - 1).ToList()),
+                "count" => new NumberValue(list.Count),
+                "empty?" or "emptyp" => new NumberValue(list.Count == 0 ? 1 : 0),
+                _ => throw new InvalidOperationException($"Unknown list function: {node.FunctionName}")
+            };
+        }
+
+        // Math functions require numeric argument
         if (!argVal.IsNumber)
         {
             throw new InvalidOperationException($"Function {node.FunctionName} requires numeric argument");
         }
 
         var arg = argVal.AsNumber();
-        var funcName = node.FunctionName.ToLower();
 
         var result = funcName switch
         {

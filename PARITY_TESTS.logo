@@ -440,6 +440,120 @@ END
 ;  PENDOWN
 ;]
 
+; Test 45: List literals and variables
+;MAKE "nums [10 20 30 40 50]
+;MAKE "colors [255 128 64]
+;MAKE "empty []
+;PRINT :nums           ; Should print [10 20 30 40 50]
+;PRINT :empty          ; Should print []
+
+; Test 46: FIRST and LAST
+;MAKE "mylist [5 10 15 20]
+;PRINT FIRST :mylist   ; Should print 5
+;PRINT LAST :mylist    ; Should print 20
+;MAKE "x FIRST [100 200]
+;FORWARD :x            ; Should move forward 100
+
+; Test 47: BUTFIRST (BF) and BUTLAST (BL)
+;MAKE "list1 [1 2 3 4 5]
+;MAKE "rest BUTFIRST :list1
+;PRINT :rest           ; Should print [2 3 4 5]
+;MAKE "init BUTLAST :list1
+;PRINT :init           ; Should print [1 2 3 4]
+;PRINT BF [10 20]      ; Should print [20]
+;PRINT BL [10 20]      ; Should print [10]
+
+; Test 48: ITEM - access list elements (1-indexed)
+;MAKE "data [100 200 300 400]
+;FORWARD ITEM 1 :data  ; Should move forward 100
+;RIGHT 90
+;FORWARD ITEM 3 :data  ; Should move forward 300
+;MAKE "val ITEM 2 [5 10 15 20]
+;PRINT :val            ; Should print 10
+
+; Test 49: COUNT - get list length
+;MAKE "list [1 2 3 4 5]
+;PRINT COUNT :list     ; Should print 5
+;PRINT COUNT []        ; Should print 0
+;FORWARD COUNT [10 20 30] * 10  ; Should move forward 30
+
+; Test 50: EMPTY? - check if list is empty
+;PRINT EMPTY? []       ; Should print 1 (true)
+;PRINT EMPTY? [1 2]    ; Should print 0 (false)
+;IF EMPTY? [] [FORWARD 50]  ; Should move forward 50
+
+; Test 51: FPUT - add element to front of list
+;MAKE "list [2 3 4]
+;MAKE "new FPUT 1 :list
+;PRINT :new            ; Should print [1 2 3 4]
+;PRINT FPUT 0 [1 2]    ; Should print [0 1 2]
+
+; Test 52: LPUT - add element to end of list
+;MAKE "list [1 2 3]
+;MAKE "new LPUT 4 :list
+;PRINT :new            ; Should print [1 2 3 4]
+;PRINT LPUT 3 [1 2]    ; Should print [1 2 3]
+
+; Test 53: LIST - create list from items
+;MAKE "a 10
+;MAKE "b 20
+;MAKE "pair LIST :a :b
+;PRINT :pair           ; Should print [10 20]
+;PRINT LIST 5 10       ; Should print [5 10]
+
+; Test 54: SENTENCE (SE) - flatten and concatenate
+;MAKE "list1 [1 2]
+;MAKE "list2 [3 4]
+;MAKE "combined SENTENCE :list1 :list2
+;PRINT :combined       ; Should print [1 2 3 4]
+;PRINT SE [10 20] [30 40]  ; Should print [10 20 30 40]
+;PRINT SE 5 10         ; Should print [5 10]
+
+; Test 55: Nested lists
+;MAKE "matrix [[1 2] [3 4]]
+;PRINT FIRST :matrix   ; Should print [1 2]
+;PRINT FIRST FIRST :matrix  ; Should print 1
+;MAKE "row ITEM 2 :matrix
+;PRINT ITEM 1 :row     ; Should print 3
+
+; Test 56: Lists in procedures
+TO SUMLIST :list
+  IF EMPTY? :list [OUTPUT 0]
+  OUTPUT (FIRST :list) + SUMLIST BUTFIRST :list
+END
+
+;MAKE "numbers [10 20 30]
+;PRINT SUMLIST :numbers  ; Should print 60
+
+; Test 57: Building lists iteratively
+;MAKE "result []
+;MAKE "i 1
+;WHILE :i <= 5 [
+;  MAKE "result LPUT :i :result
+;  MAKE "i :i + 1
+;]
+;PRINT :result         ; Should print [1 2 3 4 5]
+
+; Test 58: List manipulation with turtle graphics
+;MAKE "path [50 100 75 125]
+;FORWARD ITEM 1 :path  ; Forward 50
+;RIGHT 90
+;FORWARD ITEM 2 :path  ; Forward 100
+;RIGHT 90
+;FORWARD ITEM 3 :path  ; Forward 75
+;RIGHT 90
+;FORWARD ITEM 4 :path  ; Forward 125
+
+; Test 59: Using COUNT with loops
+;MAKE "moves [20 30 40 50]
+;MAKE "i 1
+;WHILE :i <= COUNT :moves [
+;  FORWARD ITEM :i :moves
+;  RIGHT 90
+;  MAKE "i :i + 1
+;]
+; Should draw a shape with sides 20, 30, 40, 50
+
 ; ====================
 ; Feature Checklist
 ; ====================
@@ -465,11 +579,11 @@ END
 ; ✓ PRINT/PR (output values to console)
 ; ✓ POWER/POW (exponentiation function)
 ; ✓ WHILE loops (conditional iteration)
+; ✓ Lists and list operations (literals, FIRST, LAST, BUTFIRST, BUTLAST, ITEM, COUNT, EMPTY?, FPUT, LPUT, LIST, SENTENCE)
 
 ; ====================
 ; Missing Features (TODO for future parity)
 ; ====================
-; ✗ Lists and list operations
 ; ✗ String operations
 ; ✗ FILL command
 ; ✗ ARC command
