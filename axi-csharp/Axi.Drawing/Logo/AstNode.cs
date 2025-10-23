@@ -96,3 +96,8 @@ public record PrintNode(AstNode Value) : AstNode;
 /// WHILE loop: while condition [ commands ]
 /// </summary>
 public record WhileNode(AstNode Condition, List<AstNode> Body) : AstNode;
+
+/// <summary>
+/// FOR loop: for [variable start end increment] [ commands ]
+/// </summary>
+public record ForNode(string Variable, AstNode Start, AstNode End, AstNode? Increment, List<AstNode> Body) : AstNode;

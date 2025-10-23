@@ -1075,6 +1075,55 @@ class LogoInterpreter {
                         }
                         break;
 
+                    case 'FOR':
+                        {
+                            // FOR [variable start end increment] [commands]
+                            // OR FOR [variable start end] [commands] (increment defaults to 1)
+                            if (tokens[i + 1] !== '[') {
+                                throw new Error('FOR requires control list in brackets: FOR [var start end increment] [commands]');
+                            }
+
+                            // Parse the control list [variable start end increment]
+                            const { block: controlList, nextIndex: afterControl } = this.parseBlock(tokens, i + 2);
+
+                            if (controlList.length < 3 || controlList.length > 4) {
+                                throw new Error('FOR control list must be [variable start end] or [variable start end increment]');
+                            }
+
+                            const varName = controlList[0].replace(':', '').replace('"', '');
+                            const { value: start } = this.getNextValue(controlList, 1);
+                            const { value: end } = this.getNextValue(controlList, 2);
+                            const increment = controlList.length === 4
+                                ? this.getNextValue(controlList, 3).value
+                                : (start <= end ? 1 : -1);
+
+                            if (tokens[afterControl] !== '[') {
+                                throw new Error('FOR requires a command block in brackets');
+                            }
+
+                            const { block: commandBlock, nextIndex: afterCommands } = this.parseBlock(tokens, afterControl + 1);
+
+                            // Execute the FOR loop
+                            if (increment > 0) {
+                                for (let loopVar = start; loopVar <= end; loopVar += increment) {
+                                    this.variables[varName] = loopVar;
+                                    await this.execute(commandBlock);
+                                    await this.sleep(10);
+                                }
+                            } else if (increment < 0) {
+                                for (let loopVar = start; loopVar >= end; loopVar += increment) {
+                                    this.variables[varName] = loopVar;
+                                    await this.execute(commandBlock);
+                                    await this.sleep(10);
+                                }
+                            } else {
+                                throw new Error('FOR loop increment cannot be zero');
+                            }
+
+                            i = afterCommands - 1;
+                        }
+                        break;
+
                     case 'IF':
                         {
                             const { value: condition, nextIndex: afterExpr } = this.getNextValue(tokens, i + 1);

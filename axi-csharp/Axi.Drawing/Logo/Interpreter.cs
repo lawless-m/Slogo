@@ -65,6 +65,10 @@ public class Interpreter
                 ExecuteWhile(whileNode);
                 break;
 
+            case ForNode forNode:
+                ExecuteFor(forNode);
+                break;
+
             default:
                 throw new InvalidOperationException($"Unknown node type: {node.GetType().Name}");
         }
@@ -643,6 +647,51 @@ public class Interpreter
             foreach (var statement in whileNode.Body)
             {
                 Execute(statement);
+            }
+        }
+    }
+
+    private void ExecuteFor(ForNode forNode)
+    {
+        var start = EvaluateExpression(forNode.Start).AsNumber();
+        var end = EvaluateExpression(forNode.End).AsNumber();
+
+        // Determine increment: if not specified, use 1 for ascending, -1 for descending
+        double increment;
+        if (forNode.Increment != null)
+        {
+            increment = EvaluateExpression(forNode.Increment).AsNumber();
+            if (increment == 0)
+                throw new InvalidOperationException("FOR loop increment cannot be zero");
+        }
+        else
+        {
+            increment = start <= end ? 1 : -1;
+        }
+
+        // Execute the loop
+        if (increment > 0)
+        {
+            for (double i = start; i <= end; i += increment)
+            {
+                _context.SetVariable(forNode.Variable, new NumberValue(i));
+
+                foreach (var statement in forNode.Body)
+                {
+                    Execute(statement);
+                }
+            }
+        }
+        else
+        {
+            for (double i = start; i >= end; i += increment)
+            {
+                _context.SetVariable(forNode.Variable, new NumberValue(i));
+
+                foreach (var statement in forNode.Body)
+                {
+                    Execute(statement);
+                }
             }
         }
     }

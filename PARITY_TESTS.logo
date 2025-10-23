@@ -605,6 +605,78 @@ END
 ;]
 ; Should draw with increasing pen thickness
 
+; Test 65: Basic FOR loop ascending
+;CLEAR
+;HOME
+;FOR [i 1 5 1] [
+;  FORWARD 50
+;  RIGHT 72
+;]
+; Should draw a pentagon
+
+; Test 66: FOR loop with variable in command
+;CLEAR
+;HOME
+;FOR [size 10 100 10] [
+;  FORWARD :size
+;  RIGHT 90
+;]
+; Should draw with increasing lengths
+
+; Test 67: FOR loop descending
+;CLEAR
+;HOME
+;MAKE "x 0
+;FOR [i 10 1 -1] [
+;  MAKE "x :x + :i
+;]
+;PRINT :x
+; Should print 55 (sum from 10 to 1)
+
+; Test 68: FOR loop without explicit increment
+;CLEAR
+;HOME
+;FOR [i 1 4] [
+;  CIRCLE 20
+;  PENUP
+;  FORWARD 50
+;  PENDOWN
+;]
+; Should draw 4 circles with auto-increment of 1
+
+; Test 69: FOR loop descending without explicit increment
+;CLEAR
+;HOME
+;MAKE "result 0
+;FOR [i 5 1] [
+;  MAKE "result :result + :i
+;]
+;PRINT :result
+; Should print 15, auto-decrement detected
+
+; Test 70: Nested FOR loops
+;CLEAR
+;HOME
+;FOR [i 1 3] [
+;  FOR [j 1 4] [
+;    FORWARD 30
+;    RIGHT 90
+;  ]
+;  PENUP
+;  FORWARD 50
+;  PENDOWN
+;]
+; Should draw 3 squares
+
+; Test 71: FOR loop with expressions
+;CLEAR
+;HOME
+;FOR [i 2 * 2 3 * 4 2] [
+;  FORWARD :i
+;  RIGHT 90
+;]
+; Start=4, End=12, Increment=2: should use values 4, 6, 8, 10, 12
+
 ; ====================
 ; Feature Checklist
 ; ====================
@@ -632,6 +704,7 @@ END
 ; ✓ POWER/POW (exponentiation function)
 ; ✓ WHILE loops (conditional iteration)
 ; ✓ Lists and list operations (literals, FIRST, LAST, BUTFIRST, BUTLAST, ITEM, COUNT, EMPTY?, FPUT, LPUT, LIST, SENTENCE)
+; ✓ FOR loops (counted iteration with variable)
 
 ; ====================
 ; Missing Features (TODO for future parity)
@@ -640,5 +713,4 @@ END
 ; ✗ FILL command
 ; ✗ ARC command
 ; ✗ TEXT/LABEL commands
-; ✗ FOR loops
 ; ✗ Local variables (LOCAL command)

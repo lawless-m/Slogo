@@ -112,6 +112,12 @@ public class Parser
             return ParseWhile();
         }
 
+        // FOR loop: for [variable start end increment] [ ... ]
+        if (Check(TokenType.Word) && Current.Value.ToLower() == "for")
+        {
+            return ParseFor();
+        }
+
         // Otherwise, it's a command
         return ParseCommand();
     }
@@ -255,6 +261,52 @@ public class Parser
         Consume(TokenType.RightBracket);
 
         return new WhileNode(condition, body);
+    }
+
+    private AstNode ParseFor()
+    {
+        Consume(); // consume 'for'
+
+        // Parse control list: [variable start end increment] or [variable start end]
+        Consume(TokenType.LeftBracket);
+
+        // Get variable name
+        string variable;
+        if (Check(TokenType.Colon))
+        {
+            Consume(); // consume ':'
+            variable = Consume(TokenType.Word).Value;
+        }
+        else if (Check(TokenType.Word))
+        {
+            variable = Consume(TokenType.Word).Value;
+        }
+        else
+        {
+            throw new Exception("FOR loop requires a variable name");
+        }
+
+        // Parse start value
+        var start = ParseExpression();
+
+        // Parse end value
+        var end = ParseExpression();
+
+        // Parse optional increment
+        AstNode? increment = null;
+        if (!Check(TokenType.RightBracket))
+        {
+            increment = ParseExpression();
+        }
+
+        Consume(TokenType.RightBracket);
+
+        // Parse body
+        Consume(TokenType.LeftBracket);
+        var body = ParseBlock();
+        Consume(TokenType.RightBracket);
+
+        return new ForNode(variable, start, end, increment, body);
     }
 
     private List<AstNode> ParseBlock()

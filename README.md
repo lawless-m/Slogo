@@ -123,6 +123,8 @@ REPEAT 4 [
 |---------|-------------|---------|
 | `REPEAT n [commands]` | Repeat commands n times | `REPEAT 4 [FORWARD 100 RIGHT 90]` |
 | `WHILE condition [commands]` | Loop while condition is true (non-zero) | `WHILE :x < 100 [FORWARD 10 MAKE "x :x + 1]` |
+| `FOR [var start end increment] [commands]` | Loop with counter variable | `FOR [i 1 10 1] [FORWARD :i RIGHT 10]` |
+| `FOR [var start end] [commands]` | Loop with auto-increment | `FOR [i 1 5] [CIRCLE :i * 10]` |
 | `TO name :param1 :param2 ... [commands] END` | Define a procedure with parameters | `TO SQUARE :size REPEAT 4 [FD :size RT 90] END` |
 | `OUTPUT value` | Return a value from a procedure | `TO DOUBLE :n OUTPUT :n * 2 END` |
 | `STOP` | Exit procedure without returning a value | `IF :x < 0 [STOP]` |
@@ -330,6 +332,39 @@ REPEAT 100 [
   IF YCOR > 200 [
     SETY -200
   ]
+]
+
+; FOR loops
+; Basic FOR loop with explicit increment
+FOR [i 1 5 1] [
+  FORWARD 50
+  RIGHT 72
+]
+
+; FOR loop with auto-increment (ascending)
+FOR [size 10 50] [
+  CIRCLE :size
+  PENUP
+  FORWARD :size * 2 + 10
+  PENDOWN
+]
+
+; FOR loop with descending (auto-decrement)
+MAKE "sum 0
+FOR [i 10 1] [
+  MAKE "sum :sum + :i
+]
+PRINT :sum  ; Prints 55
+
+; Nested FOR loops
+FOR [row 1 3] [
+  FOR [col 1 4] [
+    FORWARD 30
+    RIGHT 90
+  ]
+  PENUP
+  SETXY 0 :row * -50
+  PENDOWN
 ]
 ```
 
