@@ -15,11 +15,12 @@ class LogoInterpreter {
     reset() {
         this.x = 0;
         this.y = 0;
-        this.heading = 0;
+        this.heading = 90; // Start facing up like C# version (0=right, 90=up)
         this.penDown = true;
         this.penColor = '#000000';
         this.penSize = 2;
         this.turtleVisible = true;
+        this.variables = {}; // Variable storage
         this.updateTurtleDisplay();
     }
 
@@ -31,8 +32,11 @@ class LogoInterpreter {
         const screenX = this.centerX + this.x;
         const screenY = this.centerY - this.y;
 
+        // Turtle heading: 0=right, 90=up, convert to SVG rotation (subtract 90 to make turtle point in right direction)
+        const rotation = this.heading - 90;
+
         this.turtleElement.setAttribute('transform',
-            `translate(${screenX}, ${screenY}) rotate(${this.heading})`);
+            `translate(${screenX}, ${screenY}) rotate(${rotation})`);
         this.turtleElement.style.display = this.turtleVisible ? 'block' : 'none';
 
         document.getElementById('turtleX').textContent = Math.round(this.x);
@@ -45,7 +49,8 @@ class LogoInterpreter {
         const startX = this.x;
         const startY = this.y;
 
-        const radians = (this.heading - 90) * Math.PI / 180;
+        // Heading: 0=right, 90=up, 180=left, 270=down
+        const radians = this.heading * Math.PI / 180;
         this.x += distance * Math.cos(radians);
         this.y += distance * Math.sin(radians);
 
@@ -61,17 +66,50 @@ class LogoInterpreter {
     }
 
     left(angle) {
-        this.heading -= angle;
+        this.heading += angle; // Counter-clockwise rotation
         while (this.heading < 0) this.heading += 360;
         while (this.heading >= 360) this.heading -= 360;
         this.updateTurtleDisplay();
     }
 
     right(angle) {
-        this.left(-angle);
+        this.heading -= angle; // Clockwise rotation
+        while (this.heading < 0) this.heading += 360;
+        while (this.heading >= 360) this.heading -= 360;
+        this.updateTurtleDisplay();
     }
 
-    setXY(x, y) {
+    setHeading(angle) {
+        this.heading = angle;
+        while (this.heading < 0) this.heading += 360;
+        while (this.heading >= 360) this.heading -= 360;
+        this.updateTurtleDisplay();
+    }
+
+    evaluateExpression(token) {
+        // Handle variable references (:varname)
+        if (token.startsWith(':')) {
+            const varName = token.substring(1).toUpperCase();
+            if (this.variables.hasOwnProperty(varName)) {
+                return this.variables[varName];
+            }
+            throw new Error(`Undefined variable: ${varName}`);
+        }
+
+        // Handle numbers
+        const value = parseFloat(token);
+        if (isNaN(value)) {
+            throw new Error(`Expected number or variable, got: ${token}`);
+        }
+        return value;
+    }
+
+    home() {
+        this.goTo(0, 0);
+        this.setHeading(90); // Face up
+    }
+
+    goTo(x, y) {
         const startX = this.x;
         const startY = this.y;
 
@@ -85,16 +123,36 @@ class LogoInterpreter {
         this.updateTurtleDisplay();
     }
 
-    setHeading(angle) {
-        this.heading = angle;
-        while (this.heading < 0) this.heading += 360;
-        while (this.heading >= 360) this.heading -= 360;
-        this.updateTurtleDisplay();
+    setX(x) {
+        this.goTo(x, this.y);
     }
 
-    home() {
-        this.setXY(0, 0);
-        this.setHeading(0);
+    setY(y) {
+        this.goTo(this.x, y);
+    }
+
+    circle(radius, steps = 36) {
+        const angleStep = 360.0 / steps;
+        const circumference = 2 * Math.PI * radius;
+        const stepDistance = circumference / steps;
+
+        for (let i = 0; i < steps; i++) {
+            this.forward(stepDistance);
+            this.left(angleStep);
+        }
+    }
+
+    box(width, height) {
+        for (let i = 0; i < 2; i++) {
+            this.forward(width);
+            this.right(90);
+            this.forward(height);
+            this.right(90);
+        }
+    }
+
+    square(size) {
+        this.box(size, size);
     }
 
     penUp() {
@@ -223,34 +281,43 @@ class LogoInterpreter {
                 switch (token) {
                     case 'FORWARD':
                     case 'FD':
-                        this.forward(parseFloat(tokens[++i]));
+                        this.forward(this.evaluateExpression(tokens[++i]));
                         break;
 
                     case 'BACKWARD':
                     case 'BK':
                     case 'BACK':
-                        this.backward(parseFloat(tokens[++i]));
+                        this.backward(this.evaluateExpression(tokens[++i]));
                         break;
 
                     case 'LEFT':
                     case 'LT':
-                        this.left(parseFloat(tokens[++i]));
+                        this.left(this.evaluateExpression(tokens[++i]));
                         break;
 
                     case 'RIGHT':
                     case 'RT':
-                        this.right(parseFloat(tokens[++i]));
+                        this.right(this.evaluateExpression(tokens[++i]));
                         break;
 
-                    case 'SETXY':
-                        const x = parseFloat(tokens[++i]);
-                        const y = parseFloat(tokens[++i]);
-                        this.setXY(x, y);
+                    case 'GOTO':
+                    case 'SETXY': // Keep SETXY for backward compatibility
+                        const gx = this.evaluateExpression(tokens[++i]);
+                        const gy = this.evaluateExpression(tokens[++i]);
+                        this.goTo(gx, gy);
+                        break;
+
+                    case 'SETX':
+                        this.setX(this.evaluateExpression(tokens[++i]));
+                        break;
+
+                    case 'SETY':
+                        this.setY(this.evaluateExpression(tokens[++i]));
                         break;
 
                     case 'SETHEADING':
                     case 'SETH':
-                        this.setHeading(parseFloat(tokens[++i]));
+                        this.setHeading(this.evaluateExpression(tokens[++i]));
                         break;
 
                     case 'HOME':
@@ -269,15 +336,39 @@ class LogoInterpreter {
 
                     case 'PENSIZE':
                     case 'SETPENSIZE':
-                        this.setPenSize(parseFloat(tokens[++i]));
+                        this.setPenSize(this.evaluateExpression(tokens[++i]));
                         break;
 
                     case 'SETPENCOLOR':
                     case 'SETPC':
-                        const r = parseFloat(tokens[++i]);
-                        const g = parseFloat(tokens[++i]);
-                        const b = parseFloat(tokens[++i]);
+                        const r = this.evaluateExpression(tokens[++i]);
+                        const g = this.evaluateExpression(tokens[++i]);
+                        const b = this.evaluateExpression(tokens[++i]);
                         this.setPenColor(r, g, b);
+                        break;
+
+                    case 'CIRCLE':
+                        const radius = this.evaluateExpression(tokens[++i]);
+                        this.circle(radius);
+                        break;
+
+                    case 'BOX':
+                        const width = this.evaluateExpression(tokens[++i]);
+                        const height = this.evaluateExpression(tokens[++i]);
+                        this.box(width, height);
+                        break;
+
+                    case 'SQUARE':
+                        const size = this.evaluateExpression(tokens[++i]);
+                        this.square(size);
+                        break;
+
+                    case 'MAKE':
+                        // MAKE "varname value
+                        const varToken = tokens[++i];
+                        const varName = varToken.startsWith('"') ? varToken.substring(1).toUpperCase() : varToken.toUpperCase();
+                        const value = this.evaluateExpression(tokens[++i]);
+                        this.variables[varName] = value;
                         break;
 
                     case 'CLEAR':
@@ -297,7 +388,7 @@ class LogoInterpreter {
                         break;
 
                     case 'REPEAT':
-                        const count = parseInt(tokens[++i]);
+                        const count = Math.floor(this.evaluateExpression(tokens[++i]));
                         i++;
                         if (tokens[i] !== '[') {
                             throw new Error('REPEAT requires a block in brackets');
@@ -313,18 +404,59 @@ class LogoInterpreter {
                     case 'TO':
                         const procName = tokens[++i].toUpperCase();
                         i++;
+
+                        // Collect parameters (starting with :)
+                        const params = [];
+                        while (i < tokens.length && tokens[i].startsWith(':')) {
+                            params.push(tokens[i].substring(1).toUpperCase());
+                            i++;
+                        }
+
+                        // Collect body tokens until END
                         const procTokens = [];
                         while (i < tokens.length && tokens[i].toUpperCase() !== 'END') {
                             procTokens.push(tokens[i]);
                             i++;
                         }
-                        this.procedures[procName] = procTokens;
+
+                        this.procedures[procName] = { params, body: procTokens };
                         break;
 
                     default:
                         if (this.procedures[token]) {
-                            await this.execute(this.procedures[token]);
-                        } else if (token !== '') {
+                            const proc = this.procedures[token];
+
+                            // Handle procedures with parameters
+                            if (proc.params && proc.params.length > 0) {
+                                // Collect arguments
+                                const args = [];
+                                for (let p = 0; p < proc.params.length; p++) {
+                                    i++;
+                                    if (i >= tokens.length) {
+                                        throw new Error(`Procedure ${token} expects ${proc.params.length} arguments`);
+                                    }
+                                    args.push(this.evaluateExpression(tokens[i]));
+                                }
+
+                                // Save current variable scope
+                                const savedVars = { ...this.variables };
+
+                                // Set parameters as variables
+                                for (let p = 0; p < proc.params.length; p++) {
+                                    this.variables[proc.params[p]] = args[p];
+                                }
+
+                                // Execute procedure body
+                                await this.execute(proc.body);
+
+                                // Restore variable scope
+                                this.variables = savedVars;
+                            } else {
+                                // Old-style procedure without parameters (backward compatibility)
+                                const body = proc.body || proc;
+                                await this.execute(body);
+                            }
+                        } else if (token !== '' && !token.startsWith(';')) {
                             this.log(`Unknown command: ${token}`);
                         }
                 }
@@ -383,61 +515,76 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     exampleButton.addEventListener('click', () => {
-        codeEditor.value = `; Draw a colorful spiral
+        codeEditor.value = `; Demo of new features matching C# implementation
+
 CLEAR
 HOME
 
-REPEAT 36 [
-  SETPENCOLOR 255 0 0
-  FORWARD 100
-  RIGHT 170
+; 1. Variables with MAKE
+MAKE "size 80
+MAKE "radius 40
 
-  SETPENCOLOR 0 0 255
-  FORWARD 100
-  RIGHT 170
-]
+; 2. Procedure with parameters
+TO HEXAGON :length
+  REPEAT 6 [
+    FORWARD :length
+    RIGHT 60
+  ]
+END
 
-; Draw a square
+TO STAR :length
+  REPEAT 5 [
+    FORWARD :length
+    RIGHT 144
+  ]
+END
+
+; 3. Built-in shapes - SQUARE
 PENUP
-SETXY -150 150
+GOTO -200 150
+PENDOWN
+SETPENCOLOR 255 0 0
+SQUARE :size
+
+; 4. Built-in shapes - BOX
+PENUP
+GOTO -200 -50
 PENDOWN
 SETPENCOLOR 0 128 0
+BOX 100 60
 
-REPEAT 4 [
-  FORWARD 80
-  RIGHT 90
-]
-
-; Draw a star
+; 5. Built-in shapes - CIRCLE
 PENUP
-SETXY 150 150
-SETHEADING 0
+GOTO 0 150
+PENDOWN
+SETPENCOLOR 0 0 255
+CIRCLE :radius
+
+; 6. Use procedure with variable
+PENUP
+GOTO 100 150
 PENDOWN
 SETPENCOLOR 255 165 0
-PENSIZE 3
+HEXAGON 50
 
-REPEAT 5 [
-  FORWARD 100
-  RIGHT 144
-]
-
-; Draw concentric circles (approximated with polygons)
+; 7. Star using procedure and variable
 PENUP
-SETXY 0 -150
-SETHEADING 0
+GOTO 100 -50
 PENDOWN
 SETPENCOLOR 128 0 128
 PENSIZE 2
+MAKE "starsize 70
+STAR :starsize
 
-REPEAT 3 [
-  REPEAT 36 [
-    FORWARD 3
-    RIGHT 10
-  ]
-  PENUP
-  SETXY 0 -150
-  FORWARD 20
-  PENDOWN
+; 8. Flower pattern with circles
+PENUP
+GOTO 0 -100
+PENDOWN
+SETPENCOLOR 255 100 200
+PENSIZE 1
+REPEAT 12 [
+  CIRCLE 30
+  RIGHT 30
 ]`;
     });
 

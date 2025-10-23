@@ -78,8 +78,10 @@ REPEAT 4 [
                         <li><code>BACKWARD n</code> or <code>BK n</code> - Move backward n pixels</li>
                         <li><code>LEFT n</code> or <code>LT n</code> - Turn left n degrees</li>
                         <li><code>RIGHT n</code> or <code>RT n</code> - Turn right n degrees</li>
-                        <li><code>SETXY x y</code> - Move to position (x, y)</li>
-                        <li><code>SETHEADING n</code> or <code>SETH n</code> - Set heading to n degrees</li>
+                        <li><code>GOTO x y</code> - Move to position (x, y)</li>
+                        <li><code>SETX n</code> - Set X position to n</li>
+                        <li><code>SETY n</code> - Set Y position to n</li>
+                        <li><code>SETHEADING n</code> or <code>SETH n</code> - Set heading (0=right, 90=up)</li>
                         <li><code>HOME</code> - Return to center (0, 0) facing up</li>
                     </ul>
                 </div>
@@ -93,18 +95,23 @@ REPEAT 4 [
                     </ul>
                 </div>
                 <div class="command-group">
-                    <h3>Display</h3>
+                    <h3>Display & Shapes</h3>
                     <ul>
                         <li><code>CLEAR</code> - Clear all drawings</li>
                         <li><code>HIDETURTLE</code> or <code>HT</code> - Hide the turtle</li>
                         <li><code>SHOWTURTLE</code> or <code>ST</code> - Show the turtle</li>
+                        <li><code>CIRCLE radius</code> - Draw a circle</li>
+                        <li><code>BOX width height</code> - Draw a rectangle</li>
+                        <li><code>SQUARE size</code> - Draw a square</li>
                     </ul>
                 </div>
                 <div class="command-group">
-                    <h3>Control Flow</h3>
+                    <h3>Variables & Control</h3>
                     <ul>
+                        <li><code>MAKE "var value</code> - Set variable</li>
+                        <li><code>:var</code> - Use variable value</li>
                         <li><code>REPEAT n [commands]</code> - Repeat commands n times</li>
-                        <li><code>TO name [commands] END</code> - Define a procedure</li>
+                        <li><code>TO name :param1 :param2 ... [commands] END</code> - Define procedure</li>
                     </ul>
                 </div>
             </div>

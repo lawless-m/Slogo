@@ -1,6 +1,6 @@
 # Logo Interpreter
 
-A JavaScript implementation of Logo turtle graphics using SVG rendering. This interpreter brings the classic educational programming language to the web with a modern, interactive interface.
+A JavaScript implementation of Logo turtle graphics using SVG rendering, designed to match the C# Avalonia implementation from the [axi](https://github.com/lawless-m/axi) project. This interpreter brings the classic educational programming language to the web with a modern, interactive interface.
 
 ## Features
 
@@ -8,9 +8,12 @@ A JavaScript implementation of Logo turtle graphics using SVG rendering. This in
 - **Real-time turtle visualization** - See the turtle move as it draws
 - **Interactive editor** - Write and execute Logo programs in your browser
 - **Standard Logo commands** - Supports classic Logo syntax and commands
-- **Procedures** - Define and reuse custom procedures
+- **Variables** - Support for variables with MAKE and :varname syntax
+- **Procedures with parameters** - Define reusable procedures with parameters
+- **Built-in shapes** - CIRCLE, BOX, and SQUARE commands
 - **Color control** - Set pen colors and background colors
 - **Responsive design** - Works on desktop and mobile devices
+- **Compatible with C# implementation** - Matches the command set and behavior of the axi-csharp Logo interpreter
 
 ## Getting Started
 
@@ -50,8 +53,10 @@ REPEAT 4 [
 | `BACKWARD n` | `BK n`, `BACK n` | Move backward n pixels | `BACKWARD 50` |
 | `LEFT n` | `LT n` | Turn left n degrees | `LEFT 90` |
 | `RIGHT n` | `RT n` | Turn right n degrees | `RIGHT 45` |
-| `SETXY x y` | | Move to position (x, y) | `SETXY 100 50` |
-| `SETHEADING n` | `SETH n` | Set heading to n degrees | `SETHEADING 0` |
+| `GOTO x y` | `SETXY x y` | Move to position (x, y) | `GOTO 100 50` |
+| `SETX n` | | Set X position | `SETX 100` |
+| `SETY n` | | Set Y position | `SETY 50` |
+| `SETHEADING n` | `SETH n` | Set heading (0=right, 90=up) | `SETHEADING 90` |
 | `HOME` | | Return to center (0, 0) facing up | `HOME` |
 
 ### Pen Control Commands
@@ -71,12 +76,27 @@ REPEAT 4 [
 | `HIDETURTLE` | `HT` | Hide the turtle | `HIDETURTLE` |
 | `SHOWTURTLE` | `ST` | Show the turtle | `SHOWTURTLE` |
 
+### Shape Commands
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `CIRCLE radius` | Draw a circle with given radius | `CIRCLE 50` |
+| `BOX width height` | Draw a rectangle/box | `BOX 100 60` |
+| `SQUARE size` | Draw a square | `SQUARE 80` |
+
+### Variable Commands
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `MAKE "var value` | Create or set a variable | `MAKE "size 100` |
+| `:var` | Reference a variable value | `FORWARD :size` |
+
 ### Control Flow Commands
 
 | Command | Description | Example |
 |---------|-------------|---------|
 | `REPEAT n [commands]` | Repeat commands n times | `REPEAT 4 [FORWARD 100 RIGHT 90]` |
-| `TO name ... END` | Define a procedure | `TO SQUARE REPEAT 4 [FD 100 RT 90] END` |
+| `TO name :param1 :param2 ... [commands] END` | Define a procedure with parameters | `TO SQUARE :size REPEAT 4 [FD :size RT 90] END` |
 
 ## Example Programs
 
@@ -87,6 +107,55 @@ REPEAT 5 [
   FORWARD 100
   RIGHT 144
 ]
+```
+
+### Using Variables
+
+```logo
+MAKE "size 100
+MAKE "angle 144
+
+REPEAT 5 [
+  FORWARD :size
+  RIGHT :angle
+]
+```
+
+### Procedure with Parameters
+
+```logo
+TO STAR :length
+  REPEAT 5 [
+    FORWARD :length
+    RIGHT 144
+  ]
+END
+
+; Now use it
+STAR 100
+PENUP
+GOTO 150 0
+PENDOWN
+STAR 50
+```
+
+### Built-in Shapes
+
+```logo
+; Draw a circle
+CIRCLE 50
+
+; Draw a square
+PENUP
+GOTO 100 0
+PENDOWN
+SQUARE 80
+
+; Draw a rectangle
+PENUP
+GOTO -100 0
+PENDOWN
+BOX 120 60
 ```
 
 ### Draw a Spiral
@@ -195,12 +264,14 @@ The Logo interpreter uses a standard Cartesian coordinate system:
 
 ## Heading System
 
-Heading is measured in degrees:
+Heading is measured in degrees (matching the C# implementation):
 
-- **0°** - Up (North)
-- **90°** - Right (East)
-- **180°** - Down (South)
-- **270°** - Left (West)
+- **0°** - Right (East) - Standard mathematical orientation
+- **90°** - Up (North)
+- **180°** - Left (West)
+- **270°** - Down (South)
+
+This coordinate system matches standard mathematical conventions and the C# axi implementation.
 
 ## Architecture
 
@@ -228,8 +299,20 @@ Heading is measured in degrees:
 - `tokenize(code)` - Converts Logo code into tokens
 - `parseBlock(tokens, index)` - Parses block structures like `[...]`
 - `execute(tokens)` - Executes Logo commands
+- `evaluateExpression(token)` - Evaluates numbers and variable references
 - `forward(distance)` - Moves turtle forward
+- `circle(radius)` - Draws a circle
+- `box(width, height)` - Draws a rectangle
+- `square(size)` - Draws a square
 - `drawLine(x1, y1, x2, y2)` - Renders lines using SVG
+
+### New Features (matching C# implementation)
+
+- **Variables**: Use `MAKE "varname value` to create variables and `:varname` to reference them
+- **Procedure Parameters**: Define procedures with parameters like `TO SQUARE :size`
+- **Built-in Shapes**: CIRCLE, BOX, and SQUARE commands for common shapes
+- **Enhanced Movement**: GOTO, SETX, SETY commands for precise positioning
+- **Standard Heading**: 0° = right, 90° = up (mathematical convention)
 
 ## Browser Compatibility
 
@@ -244,14 +327,25 @@ Tested on:
 - Safari 14+
 - Edge 90+
 
+## Compatibility with C# Implementation
+
+This JavaScript implementation is designed to be compatible with the C# Avalonia Logo interpreter from the [axi](https://github.com/lawless-m/axi) project. Key features that match:
+
+- ✅ Same command set (FORWARD, BACKWARD, LEFT, RIGHT, etc.)
+- ✅ Same heading system (0° = right, 90° = up)
+- ✅ Variable support with MAKE and :varname syntax
+- ✅ Procedure definitions with parameters (TO name :param1 :param2 ... END)
+- ✅ Built-in shape commands (CIRCLE, BOX, SQUARE)
+- ✅ GOTO, SETX, SETY commands
+- ✅ Turtle graphics with SVG rendering
+
 ## Future Enhancements
 
 Potential features for future versions:
 
-- [ ] Variable support
 - [ ] Conditional statements (IF/IFELSE)
-- [ ] Mathematical expressions
-- [ ] Procedure parameters
+- [ ] Mathematical expressions (arithmetic operations)
+- [ ] Boolean operators
 - [ ] Fill operations
 - [ ] Animation speed control
 - [ ] Export drawings as SVG/PNG
@@ -259,6 +353,7 @@ Potential features for future versions:
 - [ ] Error line highlighting
 - [ ] Undo/Redo functionality
 - [ ] Save/Load programs
+- [ ] More shape primitives
 
 ## Contributing
 
