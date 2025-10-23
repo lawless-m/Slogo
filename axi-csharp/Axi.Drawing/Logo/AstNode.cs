@@ -76,3 +76,18 @@ public record QueryNode(string QueryName) : AstNode;
 /// OUTPUT statement: returns a value from a procedure
 /// </summary>
 public record OutputNode(AstNode Value) : AstNode;
+
+/// <summary>
+/// STOP statement: exits from a procedure without returning a value
+/// </summary>
+public record StopNode() : AstNode;
+
+/// <summary>
+/// PRINT statement: prints a value to output
+/// </summary>
+public record PrintNode(AstNode Value) : AstNode;
+
+/// <summary>
+/// WHILE loop: while condition [ commands ]
+/// </summary>
+public record WhileNode(AstNode Condition, List<AstNode> Body) : AstNode;

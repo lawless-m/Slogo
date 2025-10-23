@@ -111,8 +111,11 @@ REPEAT 4 [
                         <li><code>MAKE "var value</code> - Set variable</li>
                         <li><code>:var</code> - Use variable value</li>
                         <li><code>REPEAT n [commands]</code> - Repeat commands n times</li>
+                        <li><code>WHILE condition [commands]</code> - Loop while condition is true</li>
                         <li><code>TO name :param1 :param2 ... [commands] END</code> - Define procedure</li>
                         <li><code>OUTPUT value</code> - Return value from procedure</li>
+                        <li><code>STOP</code> - Exit procedure without returning value</li>
+                        <li><code>PRINT value</code> or <code>PR value</code> - Output value to console</li>
                     </ul>
                 </div>
                 <div class="command-group">
@@ -120,6 +123,7 @@ REPEAT 4 [
                     <ul>
                         <li><code>+, -, *, /</code> - Basic arithmetic</li>
                         <li><code>MOD</code> - Modulo operation</li>
+                        <li><code>POWER base exp</code> or <code>POW base exp</code> - Exponentiation (base^exp)</li>
                         <li><code>SQRT n</code> - Square root</li>
                         <li><code>SIN n, COS n, TAN n</code> - Trigonometry (degrees)</li>
                         <li><code>ABS n</code> - Absolute value</li>
@@ -160,7 +164,8 @@ REPEAT 4 [
                         <li><code>XCOR</code> - Returns current X coordinate</li>
                         <li><code>YCOR</code> - Returns current Y coordinate</li>
                         <li><code>HEADING</code> - Returns current heading (0-360)</li>
-                        <li><code>PENDOWN?</code> - Returns 1 if pen is down, 0 if up</li>
+                        <li><code>PENDOWN?</code> or <code>PENDOWNP</code> - Returns 1 if pen is down, 0 if up</li>
+                        <li><code>PENSIZE</code> - Returns current pen size</li>
                     </ul>
                 </div>
             </div>

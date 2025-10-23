@@ -19,6 +19,11 @@ public class ExecutionContext
 
     public Turtle Turtle { get; }
 
+    /// <summary>
+    /// Action called when PRINT command outputs a value
+    /// </summary>
+    public Action<double>? OnOutput { get; set; }
+
     public ExecutionContext(Turtle turtle)
     {
         Turtle = turtle;
@@ -75,5 +80,10 @@ public class ExecutionContext
     {
         if (_scopeStack.Count > 0)
             _scopeStack.Pop();
+    }
+
+    public void Output(double value)
+    {
+        OnOutput?.Invoke(value);
     }
 }

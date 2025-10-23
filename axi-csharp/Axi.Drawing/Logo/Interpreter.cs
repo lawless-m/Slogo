@@ -53,6 +53,18 @@ public class Interpreter
                 ExecuteOutput(output);
                 break;
 
+            case StopNode stop:
+                ExecuteStop(stop);
+                break;
+
+            case PrintNode print:
+                ExecutePrint(print);
+                break;
+
+            case WhileNode whileNode:
+                ExecuteWhile(whileNode);
+                break;
+
             default:
                 throw new InvalidOperationException($"Unknown node type: {node.GetType().Name}");
         }
@@ -117,6 +129,8 @@ public class Interpreter
             // Logical operators
             "and" => (left != 0 && right != 0) ? 1 : 0,
             "or" => (left != 0 || right != 0) ? 1 : 0,
+            // Power operator
+            "power" => Math.Pow(left, right),
             _ => throw new InvalidOperationException($"Unknown operator: {node.Operator}")
         };
     }
@@ -165,6 +179,7 @@ public class Interpreter
             "ycor" => turtle.Y,
             "heading" => turtle.Heading,
             "pendown?" or "pendownp" => turtle.PenDown ? 1 : 0,
+            "pensize" => turtle.PenSize,
             _ => throw new InvalidOperationException($"Unknown query function: {node.QueryName}")
         };
     }
@@ -373,6 +388,10 @@ public class Interpreter
             // If procedure uses OUTPUT, rethrow it to be handled by caller
             throw;
         }
+        catch (StopException)
+        {
+            // If procedure uses STOP, exit gracefully (don't rethrow)
+        }
         finally
         {
             _context.PopScope();
@@ -414,6 +433,11 @@ public class Interpreter
             // Procedure used OUTPUT, return the value
             return ex.Value;
         }
+        catch (StopException)
+        {
+            // Procedure used STOP, return 0
+            return 0;
+        }
         finally
         {
             _context.PopScope();
@@ -430,5 +454,33 @@ public class Interpreter
     {
         var value = EvaluateExpression(output.Value);
         throw new OutputException(value);
+    }
+
+    private void ExecuteStop(StopNode stop)
+    {
+        throw new StopException();
+    }
+
+    private void ExecutePrint(PrintNode print)
+    {
+        var value = EvaluateExpression(print.Value);
+        _context.Output(value);
+    }
+
+    private void ExecuteWhile(WhileNode whileNode)
+    {
+        while (true)
+        {
+            var condition = EvaluateExpression(whileNode.Condition);
+
+            // In Logo, non-zero values are considered true
+            if (condition == 0)
+                break;
+
+            foreach (var statement in whileNode.Body)
+            {
+                Execute(statement);
+            }
+        }
     }
 }

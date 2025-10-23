@@ -7,6 +7,14 @@ class OutputException extends Error {
     }
 }
 
+// Special exception for STOP command to exit from procedures
+class StopException extends Error {
+    constructor() {
+        super('STOP');
+        this.name = 'StopException';
+    }
+}
+
 class LogoInterpreter {
     constructor() {
         this.canvas = document.getElementById('canvas');
@@ -373,8 +381,16 @@ class LogoInterpreter {
             return { value: result, nextIndex };
         }
 
+        // POWER function (two arguments)
+        if (func === 'POWER' || func === 'POW') {
+            const { value: base, nextIndex: afterBase } = this.parsePrimary(tokens, index + 1);
+            const { value: exponent, nextIndex } = this.parsePrimary(tokens, afterBase);
+            const result = Math.pow(base, exponent);
+            return { value: result, nextIndex };
+        }
+
         // Query functions (no arguments)
-        if (['XCOR', 'YCOR', 'HEADING', 'PENDOWN?', 'PENDOWNP'].includes(func)) {
+        if (['XCOR', 'YCOR', 'HEADING', 'PENDOWN?', 'PENDOWNP', 'PENSIZE'].includes(func)) {
             let result;
             switch (func) {
                 case 'XCOR':
@@ -389,6 +405,9 @@ class LogoInterpreter {
                 case 'PENDOWN?':
                 case 'PENDOWNP':
                     result = this.penDown ? 1 : 0;
+                    break;
+                case 'PENSIZE':
+                    result = this.penSize;
                     break;
             }
             return { value: result, nextIndex: index + 1 };
@@ -439,6 +458,8 @@ class LogoInterpreter {
             } catch (error) {
                 if (error instanceof OutputException) {
                     returnValue = error.value;
+                } else if (error instanceof StopException) {
+                    returnValue = 0;  // STOP returns 0 when used in expressions
                 } else {
                     this.variables = savedVars;
                     throw error;
@@ -846,6 +867,36 @@ class LogoInterpreter {
                         }
                         break;
 
+                    case 'WHILE':
+                        {
+                            // Store the condition expression tokens
+                            let condIndex = i + 1;
+                            const condTokens = [];
+
+                            // Collect tokens until we hit '['
+                            while (condIndex < tokens.length && tokens[condIndex] !== '[') {
+                                condTokens.push(tokens[condIndex]);
+                                condIndex++;
+                            }
+
+                            if (tokens[condIndex] !== '[') {
+                                throw new Error('WHILE requires a block in brackets');
+                            }
+
+                            const { block, nextIndex } = this.parseBlock(tokens, condIndex + 1);
+
+                            // Evaluate condition and loop
+                            while (true) {
+                                const { value: condition } = this.getNextValue(condTokens, 0);
+                                if (!condition) break;
+                                await this.execute(block);
+                                await this.sleep(10);
+                            }
+
+                            i = nextIndex - 1;
+                        }
+                        break;
+
                     case 'IF':
                         {
                             const { value: condition, nextIndex: afterExpr } = this.getNextValue(tokens, i + 1);
@@ -884,6 +935,19 @@ class LogoInterpreter {
                         {
                             const { value, nextIndex } = this.getNextValue(tokens, i + 1);
                             throw new OutputException(value);
+                        }
+                        break;
+
+                    case 'STOP':
+                        throw new StopException();
+                        break;
+
+                    case 'PRINT':
+                    case 'PR':
+                        {
+                            const { value, nextIndex } = this.getNextValue(tokens, i + 1);
+                            this.log(value);
+                            i = nextIndex - 1;
                         }
                         break;
 
@@ -934,7 +998,7 @@ class LogoInterpreter {
                                     this.variables[proc.params[p]] = args[p];
                                 }
 
-                                // Execute procedure body and catch OUTPUT
+                                // Execute procedure body and catch OUTPUT/STOP
                                 try {
                                     await this.execute(proc.body);
                                 } catch (error) {
@@ -943,6 +1007,10 @@ class LogoInterpreter {
                                         this.variables = savedVars;
                                         // Store return value for expression evaluation
                                         this.lastReturnValue = error.value;
+                                        // Don't throw further, just return normally
+                                    } else if (error instanceof StopException) {
+                                        // STOP just exits the procedure
+                                        this.variables = savedVars;
                                         // Don't throw further, just return normally
                                     } else {
                                         throw error;
@@ -963,6 +1031,9 @@ class LogoInterpreter {
                                     if (error instanceof OutputException) {
                                         // Store return value for expression evaluation
                                         this.lastReturnValue = error.value;
+                                        // Don't throw further, just return normally
+                                    } else if (error instanceof StopException) {
+                                        // STOP just exits the procedure
                                         // Don't throw further, just return normally
                                     } else {
                                         throw error;

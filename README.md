@@ -122,8 +122,11 @@ REPEAT 4 [
 | Command | Description | Example |
 |---------|-------------|---------|
 | `REPEAT n [commands]` | Repeat commands n times | `REPEAT 4 [FORWARD 100 RIGHT 90]` |
+| `WHILE condition [commands]` | Loop while condition is true (non-zero) | `WHILE :x < 100 [FORWARD 10 MAKE "x :x + 1]` |
 | `TO name :param1 :param2 ... [commands] END` | Define a procedure with parameters | `TO SQUARE :size REPEAT 4 [FD :size RT 90] END` |
 | `OUTPUT value` | Return a value from a procedure | `TO DOUBLE :n OUTPUT :n * 2 END` |
+| `STOP` | Exit procedure without returning a value | `IF :x < 0 [STOP]` |
+| `PRINT value` or `PR value` | Output a value to console/output | `PRINT :x` or `PR 100 + 50` |
 
 **Procedures with OUTPUT:**
 
@@ -161,6 +164,7 @@ All numeric arguments support full arithmetic expressions:
 | Function | Description | Example |
 |----------|-------------|---------|
 | `SQRT n` | Square root | `FORWARD SQRT 100` |
+| `POWER base exp` or `POW base exp` | Exponentiation (base^exp) | `FORWARD POWER 2 3` (gives 8) |
 | `SIN n` | Sine (degrees) | `SETX 100 * SIN :angle` |
 | `COS n` | Cosine (degrees) | `SETY 100 * COS :angle` |
 | `TAN n` | Tangent (degrees) | `FORWARD TAN 45` |
@@ -207,7 +211,8 @@ Query functions return information about the turtle's current state:
 | `XCOR` | Current X coordinate | Number | `MAKE "x XCOR` |
 | `YCOR` | Current Y coordinate | Number | `MAKE "y YCOR` |
 | `HEADING` | Current heading direction | Number (0-360) | `MAKE "dir HEADING` |
-| `PENDOWN?` | Pen state | 1 if down, 0 if up | `IF PENDOWN? [PENUP]` |
+| `PENDOWN?` or `PENDOWNP` | Pen state | 1 if down, 0 if up | `IF PENDOWN? [PENUP]` |
+| `PENSIZE` | Current pen size | Number | `MAKE "size PENSIZE` |
 
 **Examples:**
 ```logo
@@ -517,9 +522,14 @@ This JavaScript implementation is designed to be compatible with the C# Avalonia
 
 Potential features for future versions:
 
-- [ ] Conditional statements (IF/IFELSE)
-- [ ] Mathematical expressions (arithmetic operations)
-- [ ] Boolean operators
+- [x] Conditional statements (IF/IFELSE) ✅
+- [x] Mathematical expressions (arithmetic operations) ✅
+- [x] Boolean operators ✅
+- [x] WHILE loops ✅
+- [x] Query functions (XCOR, YCOR, HEADING, PENDOWN?, PENSIZE) ✅
+- [x] POWER/POW function ✅
+- [x] PRINT command ✅
+- [x] STOP command ✅
 - [ ] Fill operations
 - [ ] Animation speed control
 - [ ] Export drawings as SVG/PNG
@@ -527,7 +537,9 @@ Potential features for future versions:
 - [ ] Error line highlighting
 - [ ] Undo/Redo functionality
 - [ ] Save/Load programs
-- [ ] More shape primitives
+- [ ] More shape primitives (ARC, TEXT/LABEL)
+- [ ] List operations
+- [ ] String operations
 
 ## Contributing
 

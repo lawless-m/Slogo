@@ -94,6 +94,24 @@ public class Parser
             return ParseOutput();
         }
 
+        // STOP statement: stop
+        if (Check(TokenType.Word) && Current.Value.ToLower() == "stop")
+        {
+            return ParseStop();
+        }
+
+        // PRINT statement: print value or pr value
+        if (Check(TokenType.Word) && (Current.Value.ToLower() == "print" || Current.Value.ToLower() == "pr"))
+        {
+            return ParsePrint();
+        }
+
+        // WHILE loop: while condition [ ... ]
+        if (Check(TokenType.Word) && Current.Value.ToLower() == "while")
+        {
+            return ParseWhile();
+        }
+
         // Otherwise, it's a command
         return ParseCommand();
     }
@@ -209,6 +227,34 @@ public class Parser
         var value = ParseExpression();
 
         return new OutputNode(value);
+    }
+
+    private AstNode ParseStop()
+    {
+        Consume(); // consume 'stop'
+        return new StopNode();
+    }
+
+    private AstNode ParsePrint()
+    {
+        Consume(); // consume 'print' or 'pr'
+
+        var value = ParseExpression();
+
+        return new PrintNode(value);
+    }
+
+    private AstNode ParseWhile()
+    {
+        Consume(); // consume 'while'
+
+        var condition = ParseExpression();
+
+        Consume(TokenType.LeftBracket);
+        var body = ParseBlock();
+        Consume(TokenType.RightBracket);
+
+        return new WhileNode(condition, body);
     }
 
     private List<AstNode> ParseBlock()
@@ -406,10 +452,20 @@ public class Parser
             }
 
             // Check if it's a query function (no arguments)
-            if (word is "xcor" or "ycor" or "heading" or "pendown?" or "pendownp")
+            if (word is "xcor" or "ycor" or "heading" or "pendown?" or "pendownp" or "pensize")
             {
                 Consume(); // query function name
                 return new QueryNode(word);
+            }
+
+            // Check if it's a two-argument function (POWER/POW)
+            if (word is "power" or "pow")
+            {
+                Consume(); // function name
+                var base_ = ParsePrimary(); // first argument
+                var exponent = ParsePrimary(); // second argument
+                // Use a BinaryOpNode with special operator name for power
+                return new BinaryOpNode("power", base_, exponent);
             }
 
             // Otherwise could be a procedure call
