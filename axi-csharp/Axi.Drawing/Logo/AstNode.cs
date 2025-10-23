@@ -41,3 +41,18 @@ public record ProcedureDefNode(string Name, List<string> Parameters, List<AstNod
 /// Variable assignment: make "varname value
 /// </summary>
 public record MakeNode(string VariableName, AstNode Value) : AstNode;
+
+/// <summary>
+/// Binary operation: left op right (e.g., 5 + 3, :x * 2)
+/// </summary>
+public record BinaryOpNode(string Operator, AstNode Left, AstNode Right) : AstNode;
+
+/// <summary>
+/// Unary operation: op value (e.g., -5, +3)
+/// </summary>
+public record UnaryOpNode(string Operator, AstNode Operand) : AstNode;
+
+/// <summary>
+/// Function call: funcname(arg) (e.g., SQRT 100, SIN :angle)
+/// </summary>
+public record FunctionCallNode(string FunctionName, AstNode Argument) : AstNode;

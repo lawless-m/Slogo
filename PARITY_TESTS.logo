@@ -1,0 +1,167 @@
+; =========================================
+; Logo Implementation Parity Test Suite
+; =========================================
+; Run this file in both JavaScript and C# implementations
+; to verify they support the same features.
+
+; Test 1: Basic movement
+;CLEAR
+;HOME
+;FORWARD 100
+;RIGHT 90
+;FORWARD 100
+
+; Test 2: Variables
+;CLEAR
+;HOME
+;MAKE "size 80
+;FORWARD :size
+;RIGHT 90
+;FORWARD :size
+
+; Test 3: Arithmetic expressions
+;CLEAR
+;HOME
+;MAKE "x 50
+;FORWARD :x + 30        ; Should be 80
+;RIGHT 90
+;FORWARD :x * 2         ; Should be 100
+;RIGHT 90
+;FORWARD 100 - :x       ; Should be 50
+;RIGHT 90
+;FORWARD 360 / 4        ; Should be 90
+
+; Test 4: Parentheses
+;CLEAR
+;HOME
+;FORWARD (10 + 20) * 2  ; Should be 60
+;RIGHT 90
+;FORWARD 10 + 20 * 2    ; Should be 50 (precedence)
+
+; Test 5: Math functions - SQRT
+;CLEAR
+;HOME
+;FORWARD SQRT 100       ; Should be 10
+
+; Test 6: Math functions - Trigonometry
+;CLEAR
+;HOME
+;MAKE "angle 0
+;REPEAT 4 [
+;  SETXY 100 * COS :angle 100 * SIN :angle
+;  MAKE "angle :angle + 90
+;]
+
+; Test 7: Math functions - ABS and ROUND
+;CLEAR
+;HOME
+;FORWARD ABS -50        ; Should be 50
+;RIGHT 90
+;FORWARD ROUND 37.6     ; Should be 38
+
+; Test 8: Procedures without parameters
+TO SQUARE_PROC
+  REPEAT 4 [
+    FORWARD 50
+    RIGHT 90
+  ]
+END
+
+;CLEAR
+;HOME
+;SQUARE_PROC
+
+; Test 9: Procedures with parameters
+TO POLY :sides :length
+  REPEAT :sides [
+    FORWARD :length
+    RIGHT 360 / :sides
+  ]
+END
+
+;CLEAR
+;HOME
+;POLY 6 50              ; Hexagon
+
+; Test 10: Variable modification
+;CLEAR
+;HOME
+;MAKE "counter 0
+;REPEAT 5 [
+;  FORWARD :counter
+;  RIGHT 90
+;  MAKE "counter :counter + 20  ; Increment by 20
+;]
+
+; Test 11: Built-in shapes
+;CLEAR
+;HOME
+;CIRCLE 40
+;PENUP
+;FORWARD 100
+;PENDOWN
+;SQUARE 50
+;PENUP
+;FORWARD 100
+;PENDOWN
+;BOX 60 40
+
+; Test 12: Nested expressions
+;CLEAR
+;HOME
+;MAKE "base 10
+;FORWARD :base + :base * 2 + SQRT :base  ; Should be: 10 + 20 + 3.16 ≈ 33
+
+; Test 13: MOD operator
+;CLEAR
+;HOME
+;MAKE "x 17
+;FORWARD :x MOD 5       ; Should be 2
+
+; Test 14: Unary minus
+;CLEAR
+;HOME
+;MAKE "neg -50
+;FORWARD ABS :neg       ; Should be 50
+;RIGHT 90
+;FORWARD -(-30)         ; Double negative, should be 30
+
+; Test 15: Complex arithmetic with variables
+;CLEAR
+;HOME
+;MAKE "a 10
+;MAKE "b 20
+;MAKE "c 5
+;FORWARD (:a + :b) * :c / 2    ; Should be (10+20)*5/2 = 75
+
+; ====================
+; Feature Checklist
+; ====================
+; ✓ Basic movement (FORWARD, BACKWARD, LEFT, RIGHT)
+; ✓ Variables (MAKE, :varname)
+; ✓ Arithmetic operators (+, -, *, /, MOD)
+; ✓ Parentheses for grouping
+; ✓ Math functions (SQRT, SIN, COS, TAN, ABS, ROUND, FLOOR, CEILING)
+; ✓ Procedures without parameters (TO name ... END)
+; ✓ Procedures with parameters (TO name :param ... END)
+; ✓ REPEAT loops
+; ✓ Built-in shapes (CIRCLE, BOX, SQUARE)
+; ✓ Variable increment/modification
+; ✓ Unary operators (-, +)
+; ✓ Proper operator precedence
+; ✓ Nested expressions
+
+; ====================
+; Missing Features (TODO for future parity)
+; ====================
+; ✗ IF/IFELSE conditionals
+; ✗ Comparison operators (=, <, >, <=, >=, <>)
+; ✗ Boolean operators (AND, OR, NOT)
+; ✗ Query functions (XCOR, YCOR, HEADING, PENDOWN?)
+; ✗ OUTPUT (return values from procedures)
+; ✗ WHILE loops
+; ✗ Lists and list operations
+; ✗ String operations
+; ✗ FILL command
+; ✗ ARC command
+; ✗ TEXT/LABEL commands

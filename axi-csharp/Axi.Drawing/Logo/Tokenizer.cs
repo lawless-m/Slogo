@@ -61,6 +61,14 @@ public class Tokenizer
                 _position++;
                 return new Token(TokenType.RightBracket, "]", startPos);
 
+            case '(':
+                _position++;
+                return new Token(TokenType.LeftParen, "(", startPos);
+
+            case ')':
+                _position++;
+                return new Token(TokenType.RightParen, ")", startPos);
+
             case ':':
                 _position++;
                 return new Token(TokenType.Colon, ":", startPos);
@@ -69,11 +77,27 @@ public class Tokenizer
                 _position++;
                 return new Token(TokenType.Quote, "\"", startPos);
 
-            case '-':
             case '+':
+                // Check if it's start of a number like +123
                 if (_position + 1 < _input.Length && char.IsDigit(_input[_position + 1]))
                     return ReadNumber();
-                return ReadWord();
+                _position++;
+                return new Token(TokenType.Plus, "+", startPos);
+
+            case '-':
+                // Check if it's start of a number like -123
+                if (_position + 1 < _input.Length && char.IsDigit(_input[_position + 1]))
+                    return ReadNumber();
+                _position++;
+                return new Token(TokenType.Minus, "-", startPos);
+
+            case '*':
+                _position++;
+                return new Token(TokenType.Multiply, "*", startPos);
+
+            case '/':
+                _position++;
+                return new Token(TokenType.Divide, "/", startPos);
 
             default:
                 if (char.IsDigit(ch) || ch == '.')

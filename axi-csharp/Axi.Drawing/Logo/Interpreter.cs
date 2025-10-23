@@ -56,6 +56,15 @@ public class Interpreter
             case VariableNode variable:
                 return _context.GetVariable(variable.Name);
 
+            case BinaryOpNode binaryOp:
+                return EvaluateBinaryOp(binaryOp);
+
+            case UnaryOpNode unaryOp:
+                return EvaluateUnaryOp(unaryOp);
+
+            case FunctionCallNode funcCall:
+                return EvaluateFunctionCall(funcCall);
+
             case CommandNode command:
                 // Some commands might return values (future extension)
                 ExecuteCommand(command);
@@ -64,6 +73,54 @@ public class Interpreter
             default:
                 throw new InvalidOperationException($"Cannot evaluate {node.GetType().Name} as expression");
         }
+    }
+
+    private double EvaluateBinaryOp(BinaryOpNode node)
+    {
+        var left = EvaluateExpression(node.Left);
+        var right = EvaluateExpression(node.Right);
+
+        return node.Operator.ToLower() switch
+        {
+            "+" => left + right,
+            "-" => left - right,
+            "*" => left * right,
+            "/" => right != 0 ? left / right : throw new InvalidOperationException("Division by zero"),
+            "mod" => left % right,
+            _ => throw new InvalidOperationException($"Unknown operator: {node.Operator}")
+        };
+    }
+
+    private double EvaluateUnaryOp(UnaryOpNode node)
+    {
+        var value = EvaluateExpression(node.Operand);
+
+        return node.Operator switch
+        {
+            "-" => -value,
+            "+" => value,
+            _ => throw new InvalidOperationException($"Unknown unary operator: {node.Operator}")
+        };
+    }
+
+    private double EvaluateFunctionCall(FunctionCallNode node)
+    {
+        var arg = EvaluateExpression(node.Argument);
+        var funcName = node.FunctionName.ToLower();
+
+        return funcName switch
+        {
+            "sqrt" => Math.Sqrt(arg),
+            "sin" => Math.Sin(arg * Math.PI / 180.0), // Convert degrees to radians
+            "cos" => Math.Cos(arg * Math.PI / 180.0),
+            "tan" => Math.Tan(arg * Math.PI / 180.0),
+            "abs" => Math.Abs(arg),
+            "round" => Math.Round(arg),
+            "floor" => Math.Floor(arg),
+            "ceiling" => Math.Ceiling(arg),
+            "random" => Math.Floor(new Random().NextDouble() * arg),
+            _ => throw new InvalidOperationException($"Unknown function: {node.FunctionName}")
+        };
     }
 
     private void ExecuteCommand(CommandNode command)

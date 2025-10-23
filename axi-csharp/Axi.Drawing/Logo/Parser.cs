@@ -195,6 +195,71 @@ public class Parser
 
     private AstNode ParseExpression()
     {
+        return ParseAddSub();
+    }
+
+    // Addition and subtraction (lowest precedence)
+    private AstNode ParseAddSub()
+    {
+        var left = ParseMulDiv();
+
+        while (Check(TokenType.Plus) || Check(TokenType.Minus))
+        {
+            var op = Consume();
+            var right = ParseMulDiv();
+            left = new BinaryOpNode(op.Value, left, right);
+        }
+
+        return left;
+    }
+
+    // Multiplication, division, and modulo (higher precedence)
+    private AstNode ParseMulDiv()
+    {
+        var left = ParseUnary();
+
+        while (Check(TokenType.Multiply) || Check(TokenType.Divide) ||
+               (Check(TokenType.Word) && Current.Value.Equals("mod", StringComparison.OrdinalIgnoreCase)))
+        {
+            var op = Consume();
+            var right = ParseUnary();
+            left = new BinaryOpNode(op.Value, left, right);
+        }
+
+        return left;
+    }
+
+    // Unary operators (highest precedence)
+    private AstNode ParseUnary()
+    {
+        if (Check(TokenType.Plus))
+        {
+            Consume(); // Skip unary +
+            return ParseUnary();
+        }
+
+        if (Check(TokenType.Minus))
+        {
+            Consume();
+            var operand = ParseUnary();
+            return new UnaryOpNode("-", operand);
+        }
+
+        return ParsePrimary();
+    }
+
+    // Primary expressions: numbers, variables, functions, parentheses
+    private AstNode ParsePrimary()
+    {
+        // Parentheses
+        if (Check(TokenType.LeftParen))
+        {
+            Consume(); // (
+            var expr = ParseExpression();
+            Consume(TokenType.RightParen); // )
+            return expr;
+        }
+
         // Variable reference
         if (Check(TokenType.Colon))
         {
@@ -210,9 +275,21 @@ public class Parser
             return new NumberNode(double.Parse(numToken.Value));
         }
 
-        // Could be a procedure call that returns a value
+        // Math functions or commands
         if (Check(TokenType.Word))
         {
+            var word = Current.Value.ToLower();
+
+            // Check if it's a math function
+            if (word is "sqrt" or "sin" or "cos" or "tan" or "abs" or
+                "round" or "floor" or "ceiling" or "random")
+            {
+                Consume(); // function name
+                var arg = ParsePrimary(); // Parse argument
+                return new FunctionCallNode(word, arg);
+            }
+
+            // Otherwise could be a procedure call
             return ParseCommand();
         }
 

@@ -11,6 +11,12 @@ public enum TokenType
     RightBracket,   // ]
     Colon,          // : for variable references
     Quote,          // " for variable names in make
+    Plus,           // +
+    Minus,          // -
+    Multiply,       // *
+    Divide,         // /
+    LeftParen,      // (
+    RightParen,     // )
     End             // End of input
 }
 
