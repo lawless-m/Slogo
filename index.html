@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logo Interpreter</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Logo Interpreter</h1>
+            <p>A JavaScript implementation of Logo turtle graphics using SVG</p>
+        </header>
+
+        <div class="main-content">
+            <div class="editor-section">
+                <div class="toolbar">
+                    <button id="runButton" class="btn btn-primary">Run</button>
+                    <button id="clearButton" class="btn btn-secondary">Clear Canvas</button>
+                    <button id="resetButton" class="btn btn-secondary">Reset Turtle</button>
+                    <button id="exampleButton" class="btn btn-secondary">Load Example</button>
+                </div>
+
+                <div class="editor-container">
+                    <textarea id="codeEditor" placeholder="Enter Logo commands here...
+Example:
+REPEAT 4 [
+  FORWARD 100
+  RIGHT 90
+]"></textarea>
+                </div>
+
+                <div class="output-container">
+                    <div class="output-header">Output</div>
+                    <pre id="output"></pre>
+                </div>
+            </div>
+
+            <div class="canvas-section">
+                <div class="canvas-toolbar">
+                    <label>
+                        Pen Color: <input type="color" id="penColor" value="#000000">
+                    </label>
+                    <label>
+                        Background: <input type="color" id="bgColor" value="#ffffff">
+                    </label>
+                    <label>
+                        Speed: <input type="range" id="speed" min="1" max="100" value="50">
+                        <span id="speedValue">50</span>
+                    </label>
+                </div>
+                <div class="canvas-container">
+                    <svg id="canvas" width="600" height="600">
+                        <g id="drawingLayer"></g>
+                        <g id="turtleLayer">
+                            <g id="turtle" transform="translate(300, 300)">
+                                <polygon points="0,-10 -5,10 5,10" fill="#00aa00" stroke="#006600" stroke-width="1"/>
+                            </g>
+                        </g>
+                    </svg>
+                </div>
+                <div class="turtle-info">
+                    <span>Position: (<span id="turtleX">0</span>, <span id="turtleY">0</span>)</span>
+                    <span>Heading: <span id="turtleHeading">0</span>°</span>
+                    <span>Pen: <span id="turtlePen">Down</span></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="help-section">
+            <h2>Available Commands</h2>
+            <div class="commands-grid">
+                <div class="command-group">
+                    <h3>Movement</h3>
+                    <ul>
+                        <li><code>FORWARD n</code> or <code>FD n</code> - Move forward n pixels</li>
+                        <li><code>BACKWARD n</code> or <code>BK n</code> - Move backward n pixels</li>
+                        <li><code>LEFT n</code> or <code>LT n</code> - Turn left n degrees</li>
+                        <li><code>RIGHT n</code> or <code>RT n</code> - Turn right n degrees</li>
+                        <li><code>SETXY x y</code> - Move to position (x, y)</li>
+                        <li><code>SETHEADING n</code> or <code>SETH n</code> - Set heading to n degrees</li>
+                        <li><code>HOME</code> - Return to center (0, 0) facing up</li>
+                    </ul>
+                </div>
+                <div class="command-group">
+                    <h3>Pen Control</h3>
+                    <ul>
+                        <li><code>PENUP</code> or <code>PU</code> - Lift pen (stop drawing)</li>
+                        <li><code>PENDOWN</code> or <code>PD</code> - Lower pen (start drawing)</li>
+                        <li><code>PENSIZE n</code> - Set pen width to n pixels</li>
+                        <li><code>SETPENCOLOR r g b</code> - Set pen color (RGB 0-255)</li>
+                    </ul>
+                </div>
+                <div class="command-group">
+                    <h3>Display</h3>
+                    <ul>
+                        <li><code>CLEAR</code> - Clear all drawings</li>
+                        <li><code>HIDETURTLE</code> or <code>HT</code> - Hide the turtle</li>
+                        <li><code>SHOWTURTLE</code> or <code>ST</code> - Show the turtle</li>
+                    </ul>
+                </div>
+                <div class="command-group">
+                    <h3>Control Flow</h3>
+                    <ul>
+                        <li><code>REPEAT n [commands]</code> - Repeat commands n times</li>
+                        <li><code>TO name [commands] END</code> - Define a procedure</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="logo.js"></script>
+</body>
+</html>
