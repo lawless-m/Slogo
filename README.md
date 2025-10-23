@@ -32,6 +32,8 @@ No installation required!
 
 ## Features
 
+- **Arithmetic expressions** - Full math support: `FORWARD 50 + 30`, `RIGHT 360 / :sides`
+- **Math functions** - SQRT, SIN, COS, RANDOM, ABS, ROUND, and more
 - **Variables** - `MAKE "size 100` and `:size` syntax
 - **Procedures with parameters** - `TO STAR :length`
 - **Built-in shapes** - CIRCLE, BOX, SQUARE commands
@@ -121,6 +123,57 @@ REPEAT 4 [
 |---------|-------------|---------|
 | `REPEAT n [commands]` | Repeat commands n times | `REPEAT 4 [FORWARD 100 RIGHT 90]` |
 | `TO name :param1 :param2 ... [commands] END` | Define a procedure with parameters | `TO SQUARE :size REPEAT 4 [FD :size RT 90] END` |
+
+### Arithmetic & Math Operations
+
+All numeric arguments support full arithmetic expressions:
+
+| Operator/Function | Description | Example |
+|-------------------|-------------|---------|
+| `+` | Addition | `FORWARD 50 + 30` |
+| `-` | Subtraction | `FORWARD 100 - :x` |
+| `*` | Multiplication | `FORWARD :size * 2` |
+| `/` | Division | `FORWARD 360 / :sides` |
+| `MOD` | Modulo (remainder) | `FORWARD 100 MOD 7` |
+| `( )` | Parentheses for grouping | `FORWARD (50 + 30) * 2` |
+
+### Math Functions
+
+| Function | Description | Example |
+|----------|-------------|---------|
+| `SQRT n` | Square root | `FORWARD SQRT 100` |
+| `SIN n` | Sine (degrees) | `SETX 100 * SIN :angle` |
+| `COS n` | Cosine (degrees) | `SETY 100 * COS :angle` |
+| `TAN n` | Tangent (degrees) | `FORWARD TAN 45` |
+| `ABS n` | Absolute value | `FORWARD ABS -50` |
+| `ROUND n` | Round to nearest integer | `FORWARD ROUND 3.7` |
+| `FLOOR n` | Round down | `FORWARD FLOOR 3.7` |
+| `CEILING n` | Round up | `FORWARD CEILING 3.2` |
+| `RANDOM n` | Random integer from 0 to n-1 | `FORWARD RANDOM 100` |
+
+**Examples:**
+```logo
+; Arithmetic in commands
+FORWARD 50 + 30           ; 80 pixels
+MAKE "x 10
+FORWARD :x * 5            ; 50 pixels
+RIGHT 360 / 5             ; 72 degrees (for pentagon)
+
+; Growing spiral
+MAKE "len 5
+REPEAT 20 [
+  FORWARD :len
+  RIGHT 90
+  MAKE "len :len + 3      ; Increment!
+]
+
+; Trigonometry for circle
+MAKE "angle 0
+REPEAT 36 [
+  SETXY 100 * COS :angle 100 * SIN :angle
+  MAKE "angle :angle + 10
+]
+```
 
 ## Example Programs
 

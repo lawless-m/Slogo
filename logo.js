@@ -86,22 +86,211 @@ class LogoInterpreter {
         this.updateTurtleDisplay();
     }
 
-    evaluateExpression(token) {
-        // Handle variable references (:varname)
+    // Collect tokens for an expression (stops at keywords or brackets)
+    collectExpressionTokens(tokens, startIndex) {
+        const expressionTokens = [];
+        let i = startIndex;
+
+        const keywords = ['FORWARD', 'FD', 'BACKWARD', 'BK', 'BACK', 'LEFT', 'LT', 'RIGHT', 'RT',
+                         'SETXY', 'SETX', 'SETY', 'SETHEADING', 'SETH', 'HOME', 'PENUP', 'PU',
+                         'PENDOWN', 'PD', 'PENSIZE', 'SETPENSIZE', 'SETPENCOLOR', 'SETPC',
+                         'CIRCLE', 'BOX', 'SQUARE', 'MAKE', 'CLEAR', 'CLEARSCREEN', 'CS',
+                         'HIDETURTLE', 'HT', 'SHOWTURTLE', 'ST', 'REPEAT', 'TO', 'END'];
+
+        while (i < tokens.length) {
+            const token = tokens[i];
+
+            // Stop at brackets
+            if (token === '[' || token === ']') {
+                break;
+            }
+
+            // Stop at Logo keywords (but not math functions)
+            if (keywords.includes(token.toUpperCase())) {
+                break;
+            }
+
+            expressionTokens.push(token);
+            i++;
+
+            // Stop after we have at least one token and the next would be a keyword
+            if (i < tokens.length && keywords.includes(tokens[i].toUpperCase())) {
+                break;
+            }
+        }
+
+        return { tokens: expressionTokens, nextIndex: i };
+    }
+
+    // Helper: collect and evaluate expression, return value and next index
+    getNextValue(tokens, index) {
+        const { tokens: exprTokens, nextIndex } = this.collectExpressionTokens(tokens, index);
+        if (exprTokens.length === 0) {
+            throw new Error('Expected expression');
+        }
+        const result = this.parseExpression(exprTokens, 0);
+        return { value: result.value, nextIndex };
+    }
+
+    evaluateExpression(tokens, startIndex = 0) {
+        // If tokens is a string (single token), convert to array and return just value
+        if (typeof tokens === 'string') {
+            const result = this.parseExpression([tokens], 0);
+            return result.value;
+        }
+
+        // For array input, return the full result object
+        return this.parseExpression(tokens, startIndex);
+    }
+
+    // Parse expression with operator precedence
+    parseExpression(tokens, index) {
+        return this.parseAddSub(tokens, index);
+    }
+
+    // Addition and subtraction (lowest precedence)
+    parseAddSub(tokens, index) {
+        let { value, nextIndex } = this.parseMulDiv(tokens, index);
+
+        while (nextIndex < tokens.length) {
+            const op = tokens[nextIndex];
+            if (op === '+') {
+                const right = this.parseMulDiv(tokens, nextIndex + 1);
+                value = value + right.value;
+                nextIndex = right.nextIndex;
+            } else if (op === '-') {
+                const right = this.parseMulDiv(tokens, nextIndex + 1);
+                value = value - right.value;
+                nextIndex = right.nextIndex;
+            } else {
+                break;
+            }
+        }
+
+        return { value, nextIndex };
+    }
+
+    // Multiplication, division, and modulo (medium precedence)
+    parseMulDiv(tokens, index) {
+        let { value, nextIndex } = this.parseUnary(tokens, index);
+
+        while (nextIndex < tokens.length) {
+            const op = tokens[nextIndex];
+            if (op === '*') {
+                const right = this.parseUnary(tokens, nextIndex + 1);
+                value = value * right.value;
+                nextIndex = right.nextIndex;
+            } else if (op === '/') {
+                const right = this.parseUnary(tokens, nextIndex + 1);
+                if (right.value === 0) throw new Error('Division by zero');
+                value = value / right.value;
+                nextIndex = right.nextIndex;
+            } else if (op.toUpperCase() === 'MOD') {
+                const right = this.parseUnary(tokens, nextIndex + 1);
+                value = value % right.value;
+                nextIndex = right.nextIndex;
+            } else {
+                break;
+            }
+        }
+
+        return { value, nextIndex };
+    }
+
+    // Unary operators and primary values (highest precedence)
+    parseUnary(tokens, index) {
+        if (index >= tokens.length) {
+            throw new Error('Unexpected end of expression');
+        }
+
+        const token = tokens[index];
+
+        // Unary minus
+        if (token === '-') {
+            const { value, nextIndex } = this.parseUnary(tokens, index + 1);
+            return { value: -value, nextIndex };
+        }
+
+        // Unary plus
+        if (token === '+') {
+            return this.parseUnary(tokens, index + 1);
+        }
+
+        return this.parsePrimary(tokens, index);
+    }
+
+    // Primary values: numbers, variables, functions, parentheses
+    parsePrimary(tokens, index) {
+        if (index >= tokens.length) {
+            throw new Error('Unexpected end of expression');
+        }
+
+        const token = tokens[index];
+
+        // Parentheses
+        if (token === '(') {
+            const { value, nextIndex } = this.parseExpression(tokens, index + 1);
+            if (nextIndex >= tokens.length || tokens[nextIndex] !== ')') {
+                throw new Error('Missing closing parenthesis');
+            }
+            return { value, nextIndex: nextIndex + 1 };
+        }
+
+        // Math functions
+        const func = token.toUpperCase();
+        if (['SQRT', 'SIN', 'COS', 'TAN', 'ABS', 'ROUND', 'FLOOR', 'CEILING', 'RANDOM'].includes(func)) {
+            const { value: arg, nextIndex } = this.parsePrimary(tokens, index + 1);
+            let result;
+
+            switch (func) {
+                case 'SQRT':
+                    result = Math.sqrt(arg);
+                    break;
+                case 'SIN':
+                    result = Math.sin(arg * Math.PI / 180); // Convert to radians
+                    break;
+                case 'COS':
+                    result = Math.cos(arg * Math.PI / 180);
+                    break;
+                case 'TAN':
+                    result = Math.tan(arg * Math.PI / 180);
+                    break;
+                case 'ABS':
+                    result = Math.abs(arg);
+                    break;
+                case 'ROUND':
+                    result = Math.round(arg);
+                    break;
+                case 'FLOOR':
+                    result = Math.floor(arg);
+                    break;
+                case 'CEILING':
+                    result = Math.ceil(arg);
+                    break;
+                case 'RANDOM':
+                    // RANDOM n returns random integer from 0 to n-1
+                    result = Math.floor(Math.random() * arg);
+                    break;
+            }
+
+            return { value: result, nextIndex };
+        }
+
+        // Variable reference (:varname)
         if (token.startsWith(':')) {
             const varName = token.substring(1).toUpperCase();
             if (this.variables.hasOwnProperty(varName)) {
-                return this.variables[varName];
+                return { value: this.variables[varName], nextIndex: index + 1 };
             }
             throw new Error(`Undefined variable: ${varName}`);
         }
 
-        // Handle numbers
+        // Number literal
         const value = parseFloat(token);
         if (isNaN(value)) {
             throw new Error(`Expected number or variable, got: ${token}`);
         }
-        return value;
+        return { value, nextIndex: index + 1 };
     }
 
     home() {
@@ -281,42 +470,73 @@ class LogoInterpreter {
                 switch (token) {
                     case 'FORWARD':
                     case 'FD':
-                        this.forward(this.evaluateExpression(tokens[++i]));
+                        {
+                            const { value, nextIndex } = this.getNextValue(tokens, i + 1);
+                            this.forward(value);
+                            i = nextIndex - 1;
+                        }
                         break;
 
                     case 'BACKWARD':
                     case 'BK':
                     case 'BACK':
-                        this.backward(this.evaluateExpression(tokens[++i]));
+                        {
+                            const { value, nextIndex } = this.getNextValue(tokens, i + 1);
+                            this.backward(value);
+                            i = nextIndex - 1;
+                        }
                         break;
 
                     case 'LEFT':
                     case 'LT':
-                        this.left(this.evaluateExpression(tokens[++i]));
+                        {
+                            const { value, nextIndex } = this.getNextValue(tokens, i + 1);
+                            this.left(value);
+                            i = nextIndex - 1;
+                        }
                         break;
 
                     case 'RIGHT':
                     case 'RT':
-                        this.right(this.evaluateExpression(tokens[++i]));
+                        {
+                            const { value, nextIndex } = this.getNextValue(tokens, i + 1);
+                            this.right(value);
+                            i = nextIndex - 1;
+                        }
                         break;
 
                     case 'SETXY':
-                        const gx = this.evaluateExpression(tokens[++i]);
-                        const gy = this.evaluateExpression(tokens[++i]);
-                        this.goTo(gx, gy);
+                        {
+                            const x = this.getNextValue(tokens, i + 1);
+                            const y = this.getNextValue(tokens, x.nextIndex);
+                            this.goTo(x.value, y.value);
+                            i = y.nextIndex - 1;
+                        }
                         break;
 
                     case 'SETX':
-                        this.setX(this.evaluateExpression(tokens[++i]));
+                        {
+                            const { value, nextIndex } = this.getNextValue(tokens, i + 1);
+                            this.setX(value);
+                            i = nextIndex - 1;
+                        }
                         break;
 
                     case 'SETY':
-                        this.setY(this.evaluateExpression(tokens[++i]));
+                        {
+                            const { value, nextIndex } = this.getNextValue(tokens, i + 1);
+                            this.setY(value);
+                            i = nextIndex - 1;
+                        }
                         break;
 
                     case 'SETHEADING':
                     case 'SETH':
-                        this.setHeading(this.evaluateExpression(tokens[++i]));
+                        {
+                            const { value, nextIndex } = this.getNextValue(tokens, i + 1);
+                            this.setHeading(value);
+                            i = nextIndex - 1;
+                        }
                         break;
 
                     case 'HOME':
@@ -335,39 +555,58 @@ class LogoInterpreter {
 
                     case 'PENSIZE':
                     case 'SETPENSIZE':
-                        this.setPenSize(this.evaluateExpression(tokens[++i]));
+                        {
+                            const { value, nextIndex } = this.getNextValue(tokens, i + 1);
+                            this.setPenSize(value);
+                            i = nextIndex - 1;
+                        }
                         break;
 
                     case 'SETPENCOLOR':
                     case 'SETPC':
-                        const r = this.evaluateExpression(tokens[++i]);
-                        const g = this.evaluateExpression(tokens[++i]);
-                        const b = this.evaluateExpression(tokens[++i]);
-                        this.setPenColor(r, g, b);
+                        {
+                            const r = this.getNextValue(tokens, i + 1);
+                            const g = this.getNextValue(tokens, r.nextIndex);
+                            const b = this.getNextValue(tokens, g.nextIndex);
+                            this.setPenColor(r.value, g.value, b.value);
+                            i = b.nextIndex - 1;
+                        }
                         break;
 
                     case 'CIRCLE':
-                        const radius = this.evaluateExpression(tokens[++i]);
-                        this.circle(radius);
+                        {
+                            const { value, nextIndex } = this.getNextValue(tokens, i + 1);
+                            this.circle(value);
+                            i = nextIndex - 1;
+                        }
                         break;
 
                     case 'BOX':
-                        const width = this.evaluateExpression(tokens[++i]);
-                        const height = this.evaluateExpression(tokens[++i]);
-                        this.box(width, height);
+                        {
+                            const width = this.getNextValue(tokens, i + 1);
+                            const height = this.getNextValue(tokens, width.nextIndex);
+                            this.box(width.value, height.value);
+                            i = height.nextIndex - 1;
+                        }
                         break;
 
                     case 'SQUARE':
-                        const size = this.evaluateExpression(tokens[++i]);
-                        this.square(size);
+                        {
+                            const { value, nextIndex } = this.getNextValue(tokens, i + 1);
+                            this.square(value);
+                            i = nextIndex - 1;
+                        }
                         break;
 
                     case 'MAKE':
-                        // MAKE "varname value
-                        const varToken = tokens[++i];
-                        const varName = varToken.startsWith('"') ? varToken.substring(1).toUpperCase() : varToken.toUpperCase();
-                        const value = this.evaluateExpression(tokens[++i]);
-                        this.variables[varName] = value;
+                        {
+                            // MAKE "varname value
+                            const varToken = tokens[++i];
+                            const varName = varToken.startsWith('"') ? varToken.substring(1).toUpperCase() : varToken.toUpperCase();
+                            const { value, nextIndex } = this.getNextValue(tokens, i + 1);
+                            this.variables[varName] = value;
+                            i = nextIndex - 1;
+                        }
                         break;
 
                     case 'CLEAR':
@@ -387,17 +626,18 @@ class LogoInterpreter {
                         break;
 
                     case 'REPEAT':
-                        const count = Math.floor(this.evaluateExpression(tokens[++i]));
-                        i++;
-                        if (tokens[i] !== '[') {
-                            throw new Error('REPEAT requires a block in brackets');
+                        {
+                            const { value: count, nextIndex: afterExpr } = this.getNextValue(tokens, i + 1);
+                            if (tokens[afterExpr] !== '[') {
+                                throw new Error('REPEAT requires a block in brackets');
+                            }
+                            const { block, nextIndex } = this.parseBlock(tokens, afterExpr + 1);
+                            for (let j = 0; j < Math.floor(count); j++) {
+                                await this.execute(block);
+                                await this.sleep(10);
+                            }
+                            i = nextIndex - 1;
                         }
-                        const { block, nextIndex } = this.parseBlock(tokens, i + 1);
-                        for (let j = 0; j < count; j++) {
-                            await this.execute(block);
-                            await this.sleep(10);
-                        }
-                        i = nextIndex - 1;
                         break;
 
                     case 'TO':
@@ -429,12 +669,14 @@ class LogoInterpreter {
                             if (proc.params && proc.params.length > 0) {
                                 // Collect arguments
                                 const args = [];
+                                let argIndex = i + 1;
                                 for (let p = 0; p < proc.params.length; p++) {
-                                    i++;
-                                    if (i >= tokens.length) {
+                                    if (argIndex >= tokens.length) {
                                         throw new Error(`Procedure ${token} expects ${proc.params.length} arguments`);
                                     }
-                                    args.push(this.evaluateExpression(tokens[i]));
+                                    const { value, nextIndex } = this.getNextValue(tokens, argIndex);
+                                    args.push(value);
+                                    argIndex = nextIndex;
                                 }
 
                                 // Save current variable scope
@@ -450,6 +692,9 @@ class LogoInterpreter {
 
                                 // Restore variable scope
                                 this.variables = savedVars;
+
+                                // Update index
+                                i = argIndex - 1;
                             } else {
                                 // Old-style procedure without parameters (backward compatibility)
                                 const body = proc.body || proc;
@@ -514,77 +759,82 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     exampleButton.addEventListener('click', () => {
-        codeEditor.value = `; Demo of new features matching C# implementation
+        codeEditor.value = `; Logo with Arithmetic Expressions!
 
 CLEAR
 HOME
 
-; 1. Variables with MAKE
-MAKE "size 80
-MAKE "radius 40
+; 1. Basic arithmetic
+MAKE "size 50
+FORWARD :size + 30        ; Addition
+RIGHT 90
+FORWARD :size * 2         ; Multiplication
+RIGHT 90
+FORWARD :size + :size / 2 ; Mixed operations
+RIGHT 90
+FORWARD 100 - :size       ; Subtraction
 
-; 2. Procedure with parameters
-TO HEXAGON :length
-  REPEAT 6 [
-    FORWARD :length
-    RIGHT 60
-  ]
-END
-
-TO STAR :length
-  REPEAT 5 [
-    FORWARD :length
-    RIGHT 144
-  ]
-END
-
-; 3. Built-in shapes - SQUARE
+; 2. Growing spiral with math
+HOME
 PENUP
-SETXY -200 150
+SETXY -150 100
 PENDOWN
-SETPENCOLOR 255 0 0
-SQUARE :size
+SETPENCOLOR 255 0 128
+MAKE "len 5
+REPEAT 20 [
+  FORWARD :len
+  RIGHT 90
+  MAKE "len :len + 3      ; Increment variable!
+]
 
-; 4. Built-in shapes - BOX
+; 3. Math functions - Random circles
+HOME
 PENUP
-SETXY -200 -50
-PENDOWN
-SETPENCOLOR 0 128 0
-BOX 100 60
+SETPENCOLOR 0 128 255
+REPEAT 8 [
+  SETXY RANDOM 200 - 100 RANDOM 200 - 100
+  PENDOWN
+  CIRCLE 10 + RANDOM 20   ; Random radius
+  PENUP
+]
 
-; 5. Built-in shapes - CIRCLE
+; 4. Trigonometry - Parametric curve
+HOME
 PENUP
-SETXY 0 150
+SETXY -100 0
 PENDOWN
-SETPENCOLOR 0 0 255
-CIRCLE :radius
-
-; 6. Use procedure with variable
-PENUP
-SETXY 100 150
-PENDOWN
-SETPENCOLOR 255 165 0
-HEXAGON 50
-
-; 7. Star using procedure and variable
-PENUP
-SETXY 100 -50
-PENDOWN
-SETPENCOLOR 128 0 128
+SETPENCOLOR 128 0 255
 PENSIZE 2
-MAKE "starsize 70
-STAR :starsize
+MAKE "angle 0
+REPEAT 36 [
+  SETXY 100 * COS :angle 100 * SIN :angle
+  MAKE "angle :angle + 10
+]
 
-; 8. Flower pattern with circles
+; 5. Procedure with arithmetic
+TO POLYGON :sides :size
+  REPEAT :sides [
+    FORWARD :size
+    RIGHT 360 / :sides    ; Calculate angle!
+  ]
+END
+
+HOME
 PENUP
-SETXY 0 -100
+SETXY 100 -100
 PENDOWN
-SETPENCOLOR 255 100 200
-PENSIZE 1
-REPEAT 12 [
-  CIRCLE 30
-  RIGHT 30
-]`;
+SETPENCOLOR 255 128 0
+POLYGON 7 40
+
+; 6. Nested expressions
+HOME
+PENUP
+SETXY -100 -100
+PENDOWN
+SETPENCOLOR 0 255 0
+MAKE "base 30
+SQUARE :base + SQRT 100   ; sqrt(100) = 10, so 40x40 square
+`;
     });
 
     penColorInput.addEventListener('change', (e) => {
