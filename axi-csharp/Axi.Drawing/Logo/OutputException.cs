@@ -8,9 +8,9 @@ namespace Axi.Drawing.Logo;
 /// </summary>
 public class OutputException : Exception
 {
-    public double Value { get; }
+    public Value Value { get; }
 
-    public OutputException(double value) : base("OUTPUT")
+    public OutputException(Value value) : base("OUTPUT")
     {
         Value = value;
     }

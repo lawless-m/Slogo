@@ -13,26 +13,26 @@ public record Procedure(List<string> Parameters, List<AstNode> Body);
 /// </summary>
 public class ExecutionContext
 {
-    private readonly Dictionary<string, double> _variables;
+    private readonly Dictionary<string, Value> _variables;
     private readonly Dictionary<string, Procedure> _procedures;
-    private readonly Stack<Dictionary<string, double>> _scopeStack;
+    private readonly Stack<Dictionary<string, Value>> _scopeStack;
 
     public Turtle Turtle { get; }
 
     /// <summary>
     /// Action called when PRINT command outputs a value
     /// </summary>
-    public Action<double>? OnOutput { get; set; }
+    public Action<Value>? OnOutput { get; set; }
 
     public ExecutionContext(Turtle turtle)
     {
         Turtle = turtle;
-        _variables = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+        _variables = new Dictionary<string, Value>(StringComparer.OrdinalIgnoreCase);
         _procedures = new Dictionary<string, Procedure>(StringComparer.OrdinalIgnoreCase);
-        _scopeStack = new Stack<Dictionary<string, double>>();
+        _scopeStack = new Stack<Dictionary<string, Value>>();
     }
 
-    public void SetVariable(string name, double value)
+    public void SetVariable(string name, Value value)
     {
         // Check local scope first
         if (_scopeStack.Count > 0)
@@ -45,7 +45,7 @@ public class ExecutionContext
         }
     }
 
-    public double GetVariable(string name)
+    public Value GetVariable(string name)
     {
         // Check local scopes (most recent first)
         foreach (var scope in _scopeStack)
@@ -71,7 +71,7 @@ public class ExecutionContext
         return _procedures.TryGetValue(name, out procedure);
     }
 
-    public void PushScope(Dictionary<string, double> localVariables)
+    public void PushScope(Dictionary<string, Value> localVariables)
     {
         _scopeStack.Push(localVariables);
     }
@@ -82,7 +82,7 @@ public class ExecutionContext
             _scopeStack.Pop();
     }
 
-    public void Output(double value)
+    public void Output(Value value)
     {
         OnOutput?.Invoke(value);
     }

@@ -23,6 +23,11 @@ public record CommandNode(string Name, List<AstNode> Arguments) : AstNode;
 public record NumberNode(double Value) : AstNode;
 
 /// <summary>
+/// List literal [1 2 3]
+/// </summary>
+public record ListNode(List<AstNode> Elements) : AstNode;
+
+/// <summary>
 /// Variable reference (:varname)
 /// </summary>
 public record VariableNode(string Name) : AstNode;

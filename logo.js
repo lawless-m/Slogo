@@ -341,6 +341,37 @@ class LogoInterpreter {
             return { value, nextIndex: nextIndex + 1 };
         }
 
+        // List literals [1 2 3]
+        if (token === '[') {
+            const list = [];
+            let i = index + 1;
+            let depth = 1;
+
+            while (i < tokens.length && depth > 0) {
+                if (tokens[i] === '[') {
+                    depth++;
+                } else if (tokens[i] === ']') {
+                    depth--;
+                    if (depth === 0) break;
+                }
+
+                // Parse each element as an expression
+                if (depth === 1 && tokens[i] !== ']') {
+                    const { value, nextIndex } = this.parsePrimary(tokens, i);
+                    list.push(value);
+                    i = nextIndex;
+                } else {
+                    i++;
+                }
+            }
+
+            if (depth !== 0) {
+                throw new Error('Missing closing bracket in list');
+            }
+
+            return { value: list, nextIndex: i + 1 };
+        }
+
         // Math functions
         const func = token.toUpperCase();
         if (['SQRT', 'SIN', 'COS', 'TAN', 'ABS', 'ROUND', 'FLOOR', 'CEILING', 'RANDOM'].includes(func)) {
@@ -411,6 +442,139 @@ class LogoInterpreter {
                     break;
             }
             return { value: result, nextIndex: index + 1 };
+        }
+
+        // List functions - single argument functions
+        if (['FIRST', 'LAST', 'BUTFIRST', 'BF', 'BUTLAST', 'BL', 'COUNT', 'EMPTY?', 'EMPTYP'].includes(func)) {
+            const { value: list, nextIndex } = this.parsePrimary(tokens, index + 1);
+            if (!Array.isArray(list)) {
+                throw new Error(`${func} requires a list argument`);
+            }
+
+            let result;
+            switch (func) {
+                case 'FIRST':
+                    if (list.length === 0) throw new Error('FIRST: list is empty');
+                    result = list[0];
+                    break;
+                case 'LAST':
+                    if (list.length === 0) throw new Error('LAST: list is empty');
+                    result = list[list.length - 1];
+                    break;
+                case 'BUTFIRST':
+                case 'BF':
+                    result = list.slice(1);
+                    break;
+                case 'BUTLAST':
+                case 'BL':
+                    result = list.slice(0, -1);
+                    break;
+                case 'COUNT':
+                    result = list.length;
+                    break;
+                case 'EMPTY?':
+                case 'EMPTYP':
+                    result = list.length === 0 ? 1 : 0;
+                    break;
+            }
+            return { value: result, nextIndex };
+        }
+
+        // ITEM function (two arguments: index, list) - 1-indexed
+        if (func === 'ITEM') {
+            const { value: n, nextIndex: afterN } = this.parsePrimary(tokens, index + 1);
+            const { value: list, nextIndex } = this.parsePrimary(tokens, afterN);
+            if (!Array.isArray(list)) {
+                throw new Error('ITEM requires a list as second argument');
+            }
+            const idx = Math.floor(n) - 1; // Convert to 0-indexed
+            if (idx < 0 || idx >= list.length) {
+                throw new Error(`ITEM: index ${n} out of bounds for list of length ${list.length}`);
+            }
+            return { value: list[idx], nextIndex };
+        }
+
+        // FPUT function (two arguments: item, list) - add to front
+        if (func === 'FPUT') {
+            const { value: item, nextIndex: afterItem } = this.parsePrimary(tokens, index + 1);
+            const { value: list, nextIndex } = this.parsePrimary(tokens, afterItem);
+            if (!Array.isArray(list)) {
+                throw new Error('FPUT requires a list as second argument');
+            }
+            const result = [item, ...list];
+            return { value: result, nextIndex };
+        }
+
+        // LPUT function (two arguments: item, list) - add to end
+        if (func === 'LPUT') {
+            const { value: item, nextIndex: afterItem } = this.parsePrimary(tokens, index + 1);
+            const { value: list, nextIndex } = this.parsePrimary(tokens, afterItem);
+            if (!Array.isArray(list)) {
+                throw new Error('LPUT requires a list as second argument');
+            }
+            const result = [...list, item];
+            return { value: result, nextIndex };
+        }
+
+        // LIST function (variable arguments) - create list from items
+        if (func === 'LIST') {
+            const items = [];
+            let i = index + 1;
+
+            // Collect arguments until we hit a keyword or bracket
+            while (i < tokens.length) {
+                const nextToken = tokens[i];
+                if (nextToken === '[' || nextToken === ']') break;
+
+                // Check if it's a command keyword
+                const upper = nextToken.toUpperCase();
+                const keywords = ['FORWARD', 'FD', 'BACKWARD', 'BK', 'LEFT', 'LT', 'RIGHT', 'RT',
+                                'MAKE', 'IF', 'REPEAT', 'WHILE', 'PRINT', 'PR', 'OUTPUT', 'STOP'];
+                if (keywords.includes(upper)) break;
+
+                const { value, nextIndex } = this.parsePrimary(tokens, i);
+                items.push(value);
+                i = nextIndex;
+
+                // LIST typically takes 2 arguments by default, but can take more
+                if (items.length >= 2) break;
+            }
+
+            return { value: items, nextIndex: i };
+        }
+
+        // SENTENCE/SE function (variable arguments) - flatten and concatenate
+        if (func === 'SENTENCE' || func === 'SE') {
+            const result = [];
+            let i = index + 1;
+
+            // Collect arguments until we hit a keyword or bracket
+            while (i < tokens.length) {
+                const nextToken = tokens[i];
+                if (nextToken === '[' || nextToken === ']') break;
+
+                // Check if it's a command keyword
+                const upper = nextToken.toUpperCase();
+                const keywords = ['FORWARD', 'FD', 'BACKWARD', 'BK', 'LEFT', 'LT', 'RIGHT', 'RT',
+                                'MAKE', 'IF', 'REPEAT', 'WHILE', 'PRINT', 'PR', 'OUTPUT', 'STOP'];
+                if (keywords.includes(upper)) break;
+
+                const { value, nextIndex } = this.parsePrimary(tokens, i);
+
+                // Flatten: if value is a list, add all elements; otherwise add the value
+                if (Array.isArray(value)) {
+                    result.push(...value);
+                } else {
+                    result.push(value);
+                }
+
+                i = nextIndex;
+
+                // SENTENCE typically takes 2 arguments
+                if (i - (index + 1) >= 2) break;
+            }
+
+            return { value: result, nextIndex: i };
         }
 
         // Variable reference (:varname)
@@ -595,7 +759,16 @@ class LogoInterpreter {
     }
 
     log(message) {
-        this.output.textContent += message + '\n';
+        // Format lists with brackets
+        const formatted = this.formatValue(message);
+        this.output.textContent += formatted + '\n';
+    }
+
+    formatValue(value) {
+        if (Array.isArray(value)) {
+            return '[' + value.map(v => this.formatValue(v)).join(' ') + ']';
+        }
+        return value;
     }
 
     tokenize(code) {

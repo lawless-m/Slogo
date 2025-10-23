@@ -70,12 +70,17 @@ public class Interpreter
         }
     }
 
-    private double EvaluateExpression(AstNode node)
+    private Value EvaluateExpression(AstNode node)
     {
         switch (node)
         {
             case NumberNode number:
-                return number.Value;
+                return new NumberValue(number.Value);
+
+            case ListNode list:
+                // Evaluate each element of the list
+                var elements = list.Elements.Select(EvaluateExpression).ToList();
+                return new ListValue(elements);
 
             case VariableNode variable:
                 return _context.GetVariable(variable.Name);
@@ -100,19 +105,28 @@ public class Interpreter
                 }
                 // Otherwise it's a regular command, execute it and return 0
                 ExecuteCommand(command);
-                return 0;
+                return new NumberValue(0);
 
             default:
                 throw new InvalidOperationException($"Cannot evaluate {node.GetType().Name} as expression");
         }
     }
 
-    private double EvaluateBinaryOp(BinaryOpNode node)
+    private Value EvaluateBinaryOp(BinaryOpNode node)
     {
-        var left = EvaluateExpression(node.Left);
-        var right = EvaluateExpression(node.Right);
+        var leftVal = EvaluateExpression(node.Left);
+        var rightVal = EvaluateExpression(node.Right);
 
-        return node.Operator.ToLower() switch
+        // Binary operators work on numbers
+        if (!leftVal.IsNumber || !rightVal.IsNumber)
+        {
+            throw new InvalidOperationException($"Operator {node.Operator} requires numeric operands");
+        }
+
+        var left = leftVal.AsNumber();
+        var right = rightVal.AsNumber();
+
+        var result = node.Operator.ToLower() switch
         {
             "+" => left + right,
             "-" => left - right,
@@ -133,27 +147,45 @@ public class Interpreter
             "power" => Math.Pow(left, right),
             _ => throw new InvalidOperationException($"Unknown operator: {node.Operator}")
         };
+
+        return new NumberValue(result);
     }
 
-    private double EvaluateUnaryOp(UnaryOpNode node)
+    private Value EvaluateUnaryOp(UnaryOpNode node)
     {
-        var value = EvaluateExpression(node.Operand);
+        var val = EvaluateExpression(node.Operand);
 
-        return node.Operator switch
+        if (!val.IsNumber)
+        {
+            throw new InvalidOperationException($"Unary operator {node.Operator} requires numeric operand");
+        }
+
+        var value = val.AsNumber();
+
+        var result = node.Operator switch
         {
             "-" => -value,
             "+" => value,
             "not" => value != 0 ? 0 : 1,
             _ => throw new InvalidOperationException($"Unknown unary operator: {node.Operator}")
         };
+
+        return new NumberValue(result);
     }
 
-    private double EvaluateFunctionCall(FunctionCallNode node)
+    private Value EvaluateFunctionCall(FunctionCallNode node)
     {
-        var arg = EvaluateExpression(node.Argument);
+        var argVal = EvaluateExpression(node.Argument);
+
+        if (!argVal.IsNumber)
+        {
+            throw new InvalidOperationException($"Function {node.FunctionName} requires numeric argument");
+        }
+
+        var arg = argVal.AsNumber();
         var funcName = node.FunctionName.ToLower();
 
-        return funcName switch
+        var result = funcName switch
         {
             "sqrt" => Math.Sqrt(arg),
             "sin" => Math.Sin(arg * Math.PI / 180.0), // Convert degrees to radians
@@ -166,14 +198,16 @@ public class Interpreter
             "random" => Math.Floor(new Random().NextDouble() * arg),
             _ => throw new InvalidOperationException($"Unknown function: {node.FunctionName}")
         };
+
+        return new NumberValue(result);
     }
 
-    private double EvaluateQuery(QueryNode node)
+    private Value EvaluateQuery(QueryNode node)
     {
         var turtle = _context.Turtle;
         var queryName = node.QueryName.ToLower();
 
-        return queryName switch
+        var result = queryName switch
         {
             "xcor" => turtle.X,
             "ycor" => turtle.Y,
@@ -182,6 +216,8 @@ public class Interpreter
             "pensize" => turtle.PenSize,
             _ => throw new InvalidOperationException($"Unknown query function: {node.QueryName}")
         };
+
+        return new NumberValue(result);
     }
 
     private void ExecuteCommand(CommandNode command)
@@ -201,32 +237,32 @@ public class Interpreter
             case "forward":
             case "fd":
                 if (command.Arguments.Count > 0)
-                    turtle.Forward(EvaluateExpression(command.Arguments[0]));
+                    turtle.Forward(EvaluateExpression(command.Arguments[0]).AsNumber());
                 break;
 
             case "backward":
             case "bk":
             case "back":
                 if (command.Arguments.Count > 0)
-                    turtle.Backward(EvaluateExpression(command.Arguments[0]));
+                    turtle.Backward(EvaluateExpression(command.Arguments[0]).AsNumber());
                 break;
 
             case "right":
             case "rt":
                 if (command.Arguments.Count > 0)
-                    turtle.Right(EvaluateExpression(command.Arguments[0]));
+                    turtle.Right(EvaluateExpression(command.Arguments[0]).AsNumber());
                 break;
 
             case "left":
             case "lt":
                 if (command.Arguments.Count > 0)
-                    turtle.Left(EvaluateExpression(command.Arguments[0]));
+                    turtle.Left(EvaluateExpression(command.Arguments[0]).AsNumber());
                 break;
 
             case "setheading":
             case "seth":
                 if (command.Arguments.Count > 0)
-                    turtle.SetHeading(EvaluateExpression(command.Arguments[0]));
+                    turtle.SetHeading(EvaluateExpression(command.Arguments[0]).AsNumber());
                 break;
 
             case "penup":
@@ -304,7 +340,7 @@ public class Interpreter
 
     private void ExecuteRepeat(RepeatNode repeat)
     {
-        var count = (int)EvaluateExpression(repeat.Count);
+        var count = (int)EvaluateExpression(repeat.Count).AsNumber();
 
         for (int i = 0; i < count; i++)
         {
@@ -317,7 +353,7 @@ public class Interpreter
 
     private void ExecuteIf(IfNode ifNode)
     {
-        var condition = EvaluateExpression(ifNode.Condition);
+        var condition = EvaluateExpression(ifNode.Condition).AsNumber();
 
         // In Logo, non-zero values are considered true
         if (condition != 0)
@@ -331,7 +367,7 @@ public class Interpreter
 
     private void ExecuteIfElse(IfElseNode ifElseNode)
     {
-        var condition = EvaluateExpression(ifElseNode.Condition);
+        var condition = EvaluateExpression(ifElseNode.Condition).AsNumber();
 
         // In Logo, non-zero values are considered true
         if (condition != 0)
@@ -368,7 +404,7 @@ public class Interpreter
         }
 
         // Create local scope with parameter bindings
-        var localScope = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+        var localScope = new Dictionary<string, Value>(StringComparer.OrdinalIgnoreCase);
         for (int i = 0; i < procedure.Parameters.Count; i++)
         {
             localScope[procedure.Parameters[i]] = argValues[i];
@@ -398,7 +434,7 @@ public class Interpreter
         }
     }
 
-    private double EvaluateProcedureCall(string name, Procedure procedure, List<AstNode> arguments)
+    private Value EvaluateProcedureCall(string name, Procedure procedure, List<AstNode> arguments)
     {
         // Evaluate arguments
         var argValues = arguments.Select(EvaluateExpression).ToList();
@@ -411,7 +447,7 @@ public class Interpreter
         }
 
         // Create local scope with parameter bindings
-        var localScope = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+        var localScope = new Dictionary<string, Value>(StringComparer.OrdinalIgnoreCase);
         for (int i = 0; i < procedure.Parameters.Count; i++)
         {
             localScope[procedure.Parameters[i]] = argValues[i];
@@ -426,7 +462,7 @@ public class Interpreter
                 Execute(statement);
             }
             // If no OUTPUT was called, return 0
-            return 0;
+            return new NumberValue(0);
         }
         catch (OutputException ex)
         {
@@ -436,7 +472,7 @@ public class Interpreter
         catch (StopException)
         {
             // Procedure used STOP, return 0
-            return 0;
+            return new NumberValue(0);
         }
         finally
         {
@@ -471,7 +507,7 @@ public class Interpreter
     {
         while (true)
         {
-            var condition = EvaluateExpression(whileNode.Condition);
+            var condition = EvaluateExpression(whileNode.Condition).AsNumber();
 
             // In Logo, non-zero values are considered true
             if (condition == 0)
