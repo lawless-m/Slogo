@@ -1,19 +1,43 @@
-# Logo Interpreter
+# Slogo - Multi-Platform Logo Turtle Graphics
 
-A JavaScript implementation of Logo turtle graphics using SVG rendering, designed to match the C# Avalonia implementation from the [axi](https://github.com/lawless-m/axi) project. This interpreter brings the classic educational programming language to the web with a modern, interactive interface.
+A collection of Logo turtle graphics implementations for different platforms, sharing compatible syntax. Perfect for learning Logo, prototyping drawings, and controlling pen plotters.
+
+## Implementations
+
+This repository contains two implementations:
+
+### 🌐 Web (JavaScript + SVG)
+- **Location**: Root directory (`index.html`, `logo.js`, `style.css`)
+- **Platform**: Any modern web browser
+- **Setup**: Just open `index.html` - no installation required!
+- **Best for**: Quick prototyping, learning Logo, testing programs
+
+### 🖥️ Desktop (C# + Avalonia)
+- **Location**: `axi-csharp/`
+- **Platform**: Windows, macOS, Linux (cross-platform GUI)
+- **Setup**: Requires .NET 6+
+- **Best for**: Desktop application, plotter integration, advanced features
+
+Both implementations share **compatible Logo syntax**, allowing seamless workflow: prototype in browser → run on desktop.
+
+## Quick Start - Web Version
+
+The easiest way to get started:
+
+1. Open `index.html` in your browser
+2. Write Logo commands in the editor
+3. Click "Run" to see the turtle draw
+
+No installation required!
 
 ## Features
 
-- **SVG-based rendering** - Crisp, scalable graphics rendered using SVG
-- **Real-time turtle visualization** - See the turtle move as it draws
-- **Interactive editor** - Write and execute Logo programs in your browser
-- **Standard Logo commands** - Supports classic Logo syntax and commands
-- **Variables** - Support for variables with MAKE and :varname syntax
-- **Procedures with parameters** - Define reusable procedures with parameters
-- **Built-in shapes** - CIRCLE, BOX, and SQUARE commands
-- **Color control** - Set pen colors and background colors
-- **Responsive design** - Works on desktop and mobile devices
-- **Compatible with C# implementation** - Matches the command set and behavior of the axi-csharp Logo interpreter
+- **Variables** - `MAKE "size 100` and `:size` syntax
+- **Procedures with parameters** - `TO STAR :length`
+- **Built-in shapes** - CIRCLE, BOX, SQUARE commands
+- **Standard Logo commands** - FORWARD, BACKWARD, LEFT, RIGHT, etc.
+- **Real-time visualization** - See the turtle move as it draws
+- **SVG rendering** - Crisp, scalable graphics
 
 ## Getting Started
 
