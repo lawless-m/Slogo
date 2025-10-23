@@ -66,3 +66,8 @@ public record IfNode(AstNode Condition, List<AstNode> TrueBlock) : AstNode;
 /// IFELSE conditional: ifelse condition [ trueCommands ] [ falseCommands ]
 /// </summary>
 public record IfElseNode(AstNode Condition, List<AstNode> TrueBlock, List<AstNode> FalseBlock) : AstNode;
+
+/// <summary>
+/// Query function: returns turtle state (e.g., XCOR, YCOR, HEADING, PENDOWN?)
+/// </summary>
+public record QueryNode(string QueryName) : AstNode;

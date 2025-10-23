@@ -73,6 +73,9 @@ public class Interpreter
             case FunctionCallNode funcCall:
                 return EvaluateFunctionCall(funcCall);
 
+            case QueryNode query:
+                return EvaluateQuery(query);
+
             case CommandNode command:
                 // Some commands might return values (future extension)
                 ExecuteCommand(command);
@@ -139,6 +142,21 @@ public class Interpreter
             "ceiling" => Math.Ceiling(arg),
             "random" => Math.Floor(new Random().NextDouble() * arg),
             _ => throw new InvalidOperationException($"Unknown function: {node.FunctionName}")
+        };
+    }
+
+    private double EvaluateQuery(QueryNode node)
+    {
+        var turtle = _context.Turtle;
+        var queryName = node.QueryName.ToLower();
+
+        return queryName switch
+        {
+            "xcor" => turtle.X,
+            "ycor" => turtle.Y,
+            "heading" => turtle.Heading,
+            "pendown?" or "pendownp" => turtle.PenDown ? 1 : 0,
+            _ => throw new InvalidOperationException($"Unknown query function: {node.QueryName}")
         };
     }
 

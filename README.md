@@ -179,6 +179,17 @@ Comparisons return 1 for true, 0 for false.
 | `IF condition [commands]` | Execute commands if condition is true (non-zero) | `IF :x > 50 [FORWARD 100]` |
 | `IFELSE condition [true] [false]` | Execute first block if true, second if false | `IFELSE :x > 50 [FORWARD 100] [BACKWARD 50]` |
 
+### Query Functions
+
+Query functions return information about the turtle's current state:
+
+| Function | Description | Returns | Example |
+|----------|-------------|---------|---------|
+| `XCOR` | Current X coordinate | Number | `MAKE "x XCOR` |
+| `YCOR` | Current Y coordinate | Number | `MAKE "y YCOR` |
+| `HEADING` | Current heading direction | Number (0-360) | `MAKE "dir HEADING` |
+| `PENDOWN?` | Pen state | 1 if down, 0 if up | `IF PENDOWN? [PENUP]` |
+
 **Examples:**
 ```logo
 ; Arithmetic in commands
@@ -219,6 +230,26 @@ REPEAT 10 [
   ]
   RIGHT 36
   MAKE "x :x + 1
+]
+
+; Query functions
+FORWARD 100
+MAKE "currentX XCOR
+MAKE "currentY YCOR
+MAKE "currentDir HEADING
+; Use queries to return to position
+SETXY :currentX :currentY
+SETHEADING :currentDir
+
+; Boundary checking with queries
+REPEAT 100 [
+  FORWARD 10
+  IF XCOR > 200 [
+    SETX -200
+  ]
+  IF YCOR > 200 [
+    SETY -200
+  ]
 ]
 ```
 

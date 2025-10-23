@@ -364,6 +364,27 @@ class LogoInterpreter {
             return { value: result, nextIndex };
         }
 
+        // Query functions (no arguments)
+        if (['XCOR', 'YCOR', 'HEADING', 'PENDOWN?', 'PENDOWNP'].includes(func)) {
+            let result;
+            switch (func) {
+                case 'XCOR':
+                    result = this.x;
+                    break;
+                case 'YCOR':
+                    result = this.y;
+                    break;
+                case 'HEADING':
+                    result = this.heading;
+                    break;
+                case 'PENDOWN?':
+                case 'PENDOWNP':
+                    result = this.penDown ? 1 : 0;
+                    break;
+            }
+            return { value: result, nextIndex: index + 1 };
+        }
+
         // Variable reference (:varname)
         if (token.startsWith(':')) {
             const varName = token.substring(1).toUpperCase();

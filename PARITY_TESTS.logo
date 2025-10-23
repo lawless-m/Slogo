@@ -197,6 +197,61 @@ END
 ;IF 5 <> 6 [FORWARD 10]   ; Not equal
 ; Should move forward 60 total
 
+; Test 23: Query functions - XCOR, YCOR
+;CLEAR
+;HOME
+;FORWARD 50
+;RIGHT 90
+;FORWARD 30
+;MAKE "x XCOR
+;MAKE "y YCOR
+;IF :x = 30 [FORWARD 10]    ; Should be at x=30
+;IF :y = 50 [FORWARD 10]    ; Should be at y=50
+; Should move forward 20 total
+
+; Test 24: Query function - HEADING
+;CLEAR
+;HOME
+;RIGHT 90
+;MAKE "dir HEADING
+;IF :dir = 0 [FORWARD 20]   ; Should be facing 0 degrees (right)
+;LEFT 90
+;MAKE "dir2 HEADING
+;IF :dir2 = 90 [FORWARD 20]  ; Should be facing 90 degrees (up)
+; Should move forward 40 total
+
+; Test 25: Query function - PENDOWN?
+;CLEAR
+;HOME
+;IF PENDOWN? [FORWARD 30]   ; Pen should be down initially
+;PENUP
+;IF NOT PENDOWN? [FORWARD 30]  ; Pen should be up now
+; Should move forward 60 total
+
+; Test 26: Using queries in expressions
+;CLEAR
+;HOME
+;FORWARD 100
+;RIGHT 90
+;FORWARD 50
+;FORWARD XCOR + YCOR        ; 50 + 100 = 150
+;FORWARD HEADING * 2        ; 0 * 2 = 0 (no movement)
+; Should be at position (50, 100) then move 150 more
+
+; Test 27: Saving and restoring position
+;CLEAR
+;HOME
+;FORWARD 80
+;RIGHT 45
+;FORWARD 60
+;MAKE "savedX XCOR
+;MAKE "savedY YCOR
+;MAKE "savedH HEADING
+;HOME                       ; Go back to center
+;SETXY :savedX :savedY      ; Restore position
+;SETHEADING :savedH         ; Restore heading
+;FORWARD 20                 ; Continue from saved position
+
 ; ====================
 ; Feature Checklist
 ; ====================
@@ -216,11 +271,11 @@ END
 ; ✓ IF/IFELSE conditionals
 ; ✓ Comparison operators (=, <, >, <=, >=, <>)
 ; ✓ Logical operators (AND, OR, NOT)
+; ✓ Query functions (XCOR, YCOR, HEADING, PENDOWN?)
 
 ; ====================
 ; Missing Features (TODO for future parity)
 ; ====================
-; ✗ Query functions (XCOR, YCOR, HEADING, PENDOWN?)
 ; ✗ OUTPUT (return values from procedures)
 ; ✗ WHILE loops
 ; ✗ Lists and list operations

@@ -74,6 +74,11 @@ This file contains Logo programs that test all supported features. Both implemen
 | Logical OR | ✅ | ✅ | 19 |
 | Logical NOT | ✅ | ✅ | 20 |
 | Comparisons in expressions | ✅ | ✅ | 21 |
+| XCOR, YCOR queries | ✅ | ✅ | 23 |
+| HEADING query | ✅ | ✅ | 24 |
+| PENDOWN? query | ✅ | ✅ | 25 |
+| Queries in expressions | ✅ | ✅ | 26 |
+| Position save/restore | ✅ | ✅ | 27 |
 
 ## Automated Testing (Future)
 

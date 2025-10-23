@@ -390,6 +390,13 @@ public class Parser
                 return new FunctionCallNode(word, arg);
             }
 
+            // Check if it's a query function (no arguments)
+            if (word is "xcor" or "ycor" or "heading" or "pendown?" or "pendownp")
+            {
+                Consume(); // query function name
+                return new QueryNode(word);
+            }
+
             // Otherwise could be a procedure call
             return ParseCommand();
         }
