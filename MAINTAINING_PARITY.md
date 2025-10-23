@@ -68,6 +68,12 @@ This file contains Logo programs that test all supported features. Both implemen
 | MOD operator | ✅ | ✅ | 13 |
 | Unary minus | ✅ | ✅ | 14 |
 | Complex expressions | ✅ | ✅ | 15 |
+| Comparison operators | ✅ | ✅ | 16, 22 |
+| IFELSE conditional | ✅ | ✅ | 17 |
+| Logical AND | ✅ | ✅ | 18 |
+| Logical OR | ✅ | ✅ | 19 |
+| Logical NOT | ✅ | ✅ | 20 |
+| Comparisons in expressions | ✅ | ✅ | 21 |
 
 ## Automated Testing (Future)
 

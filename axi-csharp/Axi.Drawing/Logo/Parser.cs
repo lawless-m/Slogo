@@ -70,6 +70,18 @@ public class Parser
             return ParseRepeat();
         }
 
+        // IF conditional: if condition [ ... ]
+        if (Check(TokenType.Word) && Current.Value.ToLower() == "if")
+        {
+            return ParseIf();
+        }
+
+        // IFELSE conditional: ifelse condition [ ... ] [ ... ]
+        if (Check(TokenType.Word) && Current.Value.ToLower() == "ifelse")
+        {
+            return ParseIfElse();
+        }
+
         // Variable assignment: make "varname value
         if (Check(TokenType.Word) && Current.Value.ToLower() == "make")
         {
@@ -141,6 +153,36 @@ public class Parser
         return new RepeatNode(count, body);
     }
 
+    private AstNode ParseIf()
+    {
+        Consume(); // consume 'if'
+
+        var condition = ParseExpression();
+
+        Consume(TokenType.LeftBracket);
+        var trueBlock = ParseBlock();
+        Consume(TokenType.RightBracket);
+
+        return new IfNode(condition, trueBlock);
+    }
+
+    private AstNode ParseIfElse()
+    {
+        Consume(); // consume 'ifelse'
+
+        var condition = ParseExpression();
+
+        Consume(TokenType.LeftBracket);
+        var trueBlock = ParseBlock();
+        Consume(TokenType.RightBracket);
+
+        Consume(TokenType.LeftBracket);
+        var falseBlock = ParseBlock();
+        Consume(TokenType.RightBracket);
+
+        return new IfElseNode(condition, trueBlock, falseBlock);
+    }
+
     private AstNode ParseMake()
     {
         Consume(); // consume 'make'
@@ -195,10 +237,69 @@ public class Parser
 
     private AstNode ParseExpression()
     {
-        return ParseAddSub();
+        return ParseOr();
     }
 
-    // Addition and subtraction (lowest precedence)
+    // Logical OR (lowest precedence)
+    private AstNode ParseOr()
+    {
+        var left = ParseAnd();
+
+        while (Check(TokenType.Word) && Current.Value.Equals("or", StringComparison.OrdinalIgnoreCase))
+        {
+            Consume();
+            var right = ParseAnd();
+            left = new BinaryOpNode("or", left, right);
+        }
+
+        return left;
+    }
+
+    // Logical AND
+    private AstNode ParseAnd()
+    {
+        var left = ParseNot();
+
+        while (Check(TokenType.Word) && Current.Value.Equals("and", StringComparison.OrdinalIgnoreCase))
+        {
+            Consume();
+            var right = ParseNot();
+            left = new BinaryOpNode("and", left, right);
+        }
+
+        return left;
+    }
+
+    // Logical NOT
+    private AstNode ParseNot()
+    {
+        if (Check(TokenType.Word) && Current.Value.Equals("not", StringComparison.OrdinalIgnoreCase))
+        {
+            Consume();
+            var operand = ParseNot();
+            return new UnaryOpNode("not", operand);
+        }
+
+        return ParseComparison();
+    }
+
+    // Comparison operators
+    private AstNode ParseComparison()
+    {
+        var left = ParseAddSub();
+
+        if (Check(TokenType.LessThan) || Check(TokenType.GreaterThan) || Check(TokenType.Equal) ||
+            Check(TokenType.LessEqual) || Check(TokenType.GreaterEqual) || Check(TokenType.NotEqual))
+        {
+            var op = Consume();
+            var right = ParseAddSub();
+            return new BinaryOpNode(op.Value, left, right);
+        }
+
+        return left;
+    }
+
+    // Addition and subtraction
     private AstNode ParseAddSub()
     {
         var left = ParseMulDiv();

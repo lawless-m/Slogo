@@ -17,6 +17,12 @@ public enum TokenType
     Divide,         // /
     LeftParen,      // (
     RightParen,     // )
+    LessThan,       // <
+    GreaterThan,    // >
+    Equal,          // =
+    LessEqual,      // <=
+    GreaterEqual,   // >=
+    NotEqual,       // <>
     End             // End of input
 }
 

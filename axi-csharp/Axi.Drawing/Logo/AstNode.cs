@@ -56,3 +56,13 @@ public record UnaryOpNode(string Operator, AstNode Operand) : AstNode;
 /// Function call: funcname(arg) (e.g., SQRT 100, SIN :angle)
 /// </summary>
 public record FunctionCallNode(string FunctionName, AstNode Argument) : AstNode;
+
+/// <summary>
+/// IF conditional: if condition [ commands ]
+/// </summary>
+public record IfNode(AstNode Condition, List<AstNode> TrueBlock) : AstNode;
+
+/// <summary>
+/// IFELSE conditional: ifelse condition [ trueCommands ] [ falseCommands ]
+/// </summary>
+public record IfElseNode(AstNode Condition, List<AstNode> TrueBlock, List<AstNode> FalseBlock) : AstNode;

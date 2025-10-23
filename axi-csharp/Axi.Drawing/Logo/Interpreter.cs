@@ -33,6 +33,14 @@ public class Interpreter
                 ExecuteRepeat(repeat);
                 break;
 
+            case IfNode ifNode:
+                ExecuteIf(ifNode);
+                break;
+
+            case IfElseNode ifElseNode:
+                ExecuteIfElse(ifElseNode);
+                break;
+
             case ProcedureDefNode procDef:
                 ExecuteProcedureDef(procDef);
                 break;
@@ -87,6 +95,16 @@ public class Interpreter
             "*" => left * right,
             "/" => right != 0 ? left / right : throw new InvalidOperationException("Division by zero"),
             "mod" => left % right,
+            // Comparison operators (return 1 for true, 0 for false)
+            "<" => left < right ? 1 : 0,
+            ">" => left > right ? 1 : 0,
+            "=" => Math.Abs(left - right) < 0.0001 ? 1 : 0,
+            "<=" => left <= right ? 1 : 0,
+            ">=" => left >= right ? 1 : 0,
+            "<>" => Math.Abs(left - right) >= 0.0001 ? 1 : 0,
+            // Logical operators
+            "and" => (left != 0 && right != 0) ? 1 : 0,
+            "or" => (left != 0 || right != 0) ? 1 : 0,
             _ => throw new InvalidOperationException($"Unknown operator: {node.Operator}")
         };
     }
@@ -99,6 +117,7 @@ public class Interpreter
         {
             "-" => -value,
             "+" => value,
+            "not" => value != 0 ? 0 : 1,
             _ => throw new InvalidOperationException($"Unknown unary operator: {node.Operator}")
         };
     }
@@ -248,6 +267,41 @@ public class Interpreter
         for (int i = 0; i < count; i++)
         {
             foreach (var statement in repeat.Body)
+            {
+                Execute(statement);
+            }
+        }
+    }
+
+    private void ExecuteIf(IfNode ifNode)
+    {
+        var condition = EvaluateExpression(ifNode.Condition);
+
+        // In Logo, non-zero values are considered true
+        if (condition != 0)
+        {
+            foreach (var statement in ifNode.TrueBlock)
+            {
+                Execute(statement);
+            }
+        }
+    }
+
+    private void ExecuteIfElse(IfElseNode ifElseNode)
+    {
+        var condition = EvaluateExpression(ifElseNode.Condition);
+
+        // In Logo, non-zero values are considered true
+        if (condition != 0)
+        {
+            foreach (var statement in ifElseNode.TrueBlock)
+            {
+                Execute(statement);
+            }
+        }
+        else
+        {
+            foreach (var statement in ifElseNode.FalseBlock)
             {
                 Execute(statement);
             }

@@ -134,6 +134,69 @@ END
 ;MAKE "c 5
 ;FORWARD (:a + :b) * :c / 2    ; Should be (10+20)*5/2 = 75
 
+; Test 16: Comparison operators
+;CLEAR
+;HOME
+;MAKE "x 10
+;IF :x > 5 [FORWARD 50]         ; Should move forward 50
+;RIGHT 90
+;IF :x < 5 [FORWARD 50]         ; Should not move
+;RIGHT 90
+;IF :x = 10 [FORWARD 50]        ; Should move forward 50
+
+; Test 17: IFELSE conditional
+;CLEAR
+;HOME
+;MAKE "size 60
+;IFELSE :size > 50 [
+;  FORWARD :size
+;] [
+;  FORWARD 20
+;]
+; Should move forward 60
+
+; Test 18: Logical operators - AND
+;CLEAR
+;HOME
+;MAKE "x 30
+;IF (:x > 20) AND (:x < 40) [
+;  FORWARD 80             ; Should execute
+;]
+
+; Test 19: Logical operators - OR
+;CLEAR
+;HOME
+;MAKE "x 15
+;IF (:x < 10) OR (:x > 12) [
+;  FORWARD 70             ; Should execute (15 > 12)
+;]
+
+; Test 20: Logical operators - NOT
+;CLEAR
+;HOME
+;MAKE "flag 0
+;IF NOT :flag [
+;  FORWARD 60             ; Should execute (NOT 0 = 1)
+;]
+
+; Test 21: Comparison in expressions
+;CLEAR
+;HOME
+;MAKE "a 10
+;MAKE "b 20
+;FORWARD (:a < :b) * 100  ; Should be 1 * 100 = 100
+
+; Test 22: All comparison operators
+;CLEAR
+;HOME
+;IF 5 < 10 [FORWARD 10]   ; Less than
+;IF 10 > 5 [FORWARD 10]   ; Greater than
+;IF 5 = 5 [FORWARD 10]    ; Equal
+;IF 5 <= 5 [FORWARD 10]   ; Less or equal
+;IF 10 >= 5 [FORWARD 10]  ; Greater or equal
+;IF 5 <> 6 [FORWARD 10]   ; Not equal
+; Should move forward 60 total
+
 ; ====================
 ; Feature Checklist
 ; ====================
@@ -150,13 +213,13 @@ END
 ; ✓ Unary operators (-, +)
 ; ✓ Proper operator precedence
 ; ✓ Nested expressions
+; ✓ IF/IFELSE conditionals
+; ✓ Comparison operators (=, <, >, <=, >=, <>)
+; ✓ Logical operators (AND, OR, NOT)
 
 ; ====================
 ; Missing Features (TODO for future parity)
 ; ====================
-; ✗ IF/IFELSE conditionals
-; ✗ Comparison operators (=, <, >, <=, >=, <>)
-; ✗ Boolean operators (AND, OR, NOT)
 ; ✗ Query functions (XCOR, YCOR, HEADING, PENDOWN?)
 ; ✗ OUTPUT (return values from procedures)
 ; ✗ WHILE loops

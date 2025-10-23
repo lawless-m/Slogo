@@ -99,6 +99,38 @@ public class Tokenizer
                 _position++;
                 return new Token(TokenType.Divide, "/", startPos);
 
+            case '<':
+                _position++;
+                // Check for <= or <>
+                if (_position < _input.Length)
+                {
+                    if (_input[_position] == '=')
+                    {
+                        _position++;
+                        return new Token(TokenType.LessEqual, "<=", startPos);
+                    }
+                    else if (_input[_position] == '>')
+                    {
+                        _position++;
+                        return new Token(TokenType.NotEqual, "<>", startPos);
+                    }
+                }
+                return new Token(TokenType.LessThan, "<", startPos);
+
+            case '>':
+                _position++;
+                // Check for >=
+                if (_position < _input.Length && _input[_position] == '=')
+                {
+                    _position++;
+                    return new Token(TokenType.GreaterEqual, ">=", startPos);
+                }
+                return new Token(TokenType.GreaterThan, ">", startPos);
+
+            case '=':
+                _position++;
+                return new Token(TokenType.Equal, "=", startPos);
+
             default:
                 if (char.IsDigit(ch) || ch == '.')
                     return ReadNumber();

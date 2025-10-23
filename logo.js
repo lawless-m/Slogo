@@ -145,10 +145,98 @@ class LogoInterpreter {
 
     // Parse expression with operator precedence
     parseExpression(tokens, index) {
-        return this.parseAddSub(tokens, index);
+        return this.parseOr(tokens, index);
     }
 
-    // Addition and subtraction (lowest precedence)
+    // Logical OR (lowest precedence)
+    parseOr(tokens, index) {
+        let { value, nextIndex } = this.parseAnd(tokens, index);
+
+        while (nextIndex < tokens.length) {
+            const op = tokens[nextIndex];
+            if (op && op.toUpperCase() === 'OR') {
+                const right = this.parseAnd(tokens, nextIndex + 1);
+                value = (value || right.value) ? 1 : 0;
+                nextIndex = right.nextIndex;
+            } else {
+                break;
+            }
+        }
+
+        return { value, nextIndex };
+    }
+
+    // Logical AND
+    parseAnd(tokens, index) {
+        let { value, nextIndex } = this.parseNot(tokens, index);
+
+        while (nextIndex < tokens.length) {
+            const op = tokens[nextIndex];
+            if (op && op.toUpperCase() === 'AND') {
+                const right = this.parseNot(tokens, nextIndex + 1);
+                value = (value && right.value) ? 1 : 0;
+                nextIndex = right.nextIndex;
+            } else {
+                break;
+            }
+        }
+
+        return { value, nextIndex };
+    }
+
+    // Logical NOT
+    parseNot(tokens, index) {
+        if (index >= tokens.length) {
+            throw new Error('Unexpected end of expression');
+        }
+
+        const token = tokens[index];
+        if (token && token.toUpperCase() === 'NOT') {
+            const { value, nextIndex } = this.parseNot(tokens, index + 1);
+            return { value: value ? 0 : 1, nextIndex };
+        }
+
+        return this.parseComparison(tokens, index);
+    }
+
+    // Comparison operators (<, >, =, <=, >=, <>)
+    parseComparison(tokens, index) {
+        let { value, nextIndex } = this.parseAddSub(tokens, index);
+
+        while (nextIndex < tokens.length) {
+            const op = tokens[nextIndex];
+            if (op === '<' || op === '>' || op === '=' || op === '<=' || op === '>=' || op === '<>') {
+                const right = this.parseAddSub(tokens, nextIndex + 1);
+                switch (op) {
+                    case '<':
+                        value = value < right.value ? 1 : 0;
+                        break;
+                    case '>':
+                        value = value > right.value ? 1 : 0;
+                        break;
+                    case '=':
+                        value = Math.abs(value - right.value) < 0.0001 ? 1 : 0;
+                        break;
+                    case '<=':
+                        value = value <= right.value ? 1 : 0;
+                        break;
+                    case '>=':
+                        value = value >= right.value ? 1 : 0;
+                        break;
+                    case '<>':
+                        value = Math.abs(value - right.value) >= 0.0001 ? 1 : 0;
+                        break;
+                }
+                nextIndex = right.nextIndex;
+            } else {
+                break;
+            }
+        }
+
+        return { value, nextIndex };
+    }
+
+    // Addition and subtraction
     parseAddSub(tokens, index) {
         let { value, nextIndex } = this.parseMulDiv(tokens, index);
 
@@ -410,6 +498,23 @@ class LogoInterpreter {
                 }
                 tokens.push(']');
                 inBracket = false;
+            } else if (char === '<' || char === '>' || char === '=') {
+                // Handle comparison operators
+                if (current.trim()) {
+                    tokens.push(current.trim());
+                    current = '';
+                }
+                // Check for two-character operators: <=, >=, <>
+                if (i + 1 < code.length) {
+                    const nextChar = code[i + 1];
+                    if ((char === '<' && (nextChar === '=' || nextChar === '>')) ||
+                        (char === '>' && nextChar === '=')) {
+                        tokens.push(char + nextChar);
+                        i++; // Skip next character
+                        continue;
+                    }
+                }
+                tokens.push(char);
             } else if (/\s/.test(char) && !inBracket) {
                 if (current.trim()) {
                     tokens.push(current.trim());
@@ -637,6 +742,40 @@ class LogoInterpreter {
                                 await this.sleep(10);
                             }
                             i = nextIndex - 1;
+                        }
+                        break;
+
+                    case 'IF':
+                        {
+                            const { value: condition, nextIndex: afterExpr } = this.getNextValue(tokens, i + 1);
+                            if (tokens[afterExpr] !== '[') {
+                                throw new Error('IF requires a block in brackets');
+                            }
+                            const { block, nextIndex } = this.parseBlock(tokens, afterExpr + 1);
+                            if (condition) {
+                                await this.execute(block);
+                            }
+                            i = nextIndex - 1;
+                        }
+                        break;
+
+                    case 'IFELSE':
+                        {
+                            const { value: condition, nextIndex: afterExpr } = this.getNextValue(tokens, i + 1);
+                            if (tokens[afterExpr] !== '[') {
+                                throw new Error('IFELSE requires two blocks in brackets');
+                            }
+                            const { block: trueBlock, nextIndex: afterTrue } = this.parseBlock(tokens, afterExpr + 1);
+                            if (tokens[afterTrue] !== '[') {
+                                throw new Error('IFELSE requires two blocks in brackets');
+                            }
+                            const { block: falseBlock, nextIndex: afterFalse } = this.parseBlock(tokens, afterTrue + 1);
+                            if (condition) {
+                                await this.execute(trueBlock);
+                            } else {
+                                await this.execute(falseBlock);
+                            }
+                            i = afterFalse - 1;
                         }
                         break;
 

@@ -151,6 +151,34 @@ All numeric arguments support full arithmetic expressions:
 | `CEILING n` | Round up | `FORWARD CEILING 3.2` |
 | `RANDOM n` | Random integer from 0 to n-1 | `FORWARD RANDOM 100` |
 
+### Comparison Operators
+
+| Operator | Description | Example | Returns |
+|----------|-------------|---------|---------|
+| `<` | Less than | `5 < 10` | 1 (true) |
+| `>` | Greater than | `10 > 5` | 1 (true) |
+| `=` | Equal to | `5 = 5` | 1 (true) |
+| `<=` | Less than or equal | `5 <= 5` | 1 (true) |
+| `>=` | Greater than or equal | `10 >= 5` | 1 (true) |
+| `<>` | Not equal | `5 <> 10` | 1 (true) |
+
+Comparisons return 1 for true, 0 for false.
+
+### Logical Operators
+
+| Operator | Description | Example |
+|----------|-------------|---------|
+| `AND` | Logical AND | `(:x > 0) AND (:x < 100)` |
+| `OR` | Logical OR | `(:x < 0) OR (:x > 100)` |
+| `NOT` | Logical NOT | `NOT (:x = 0)` |
+
+### Conditional Commands
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `IF condition [commands]` | Execute commands if condition is true (non-zero) | `IF :x > 50 [FORWARD 100]` |
+| `IFELSE condition [true] [false]` | Execute first block if true, second if false | `IFELSE :x > 50 [FORWARD 100] [BACKWARD 50]` |
+
 **Examples:**
 ```logo
 ; Arithmetic in commands
@@ -172,6 +200,25 @@ MAKE "angle 0
 REPEAT 36 [
   SETXY 100 * COS :angle 100 * SIN :angle
   MAKE "angle :angle + 10
+]
+
+; Conditionals
+MAKE "size 50
+IF :size > 30 [
+  FORWARD :size
+  PENUP
+]
+
+; Drawing with conditions
+MAKE "x 0
+REPEAT 10 [
+  IFELSE :x < 5 [
+    FORWARD 50
+  ] [
+    FORWARD 100
+  ]
+  RIGHT 36
+  MAKE "x :x + 1
 ]
 ```
 
