@@ -69,6 +69,10 @@ public class Interpreter
                 ExecuteFor(forNode);
                 break;
 
+            case LocalNode localNode:
+                ExecuteLocal(localNode);
+                break;
+
             default:
                 throw new InvalidOperationException($"Unknown node type: {node.GetType().Name}");
         }
@@ -693,6 +697,21 @@ public class Interpreter
                     Execute(statement);
                 }
             }
+        }
+    }
+
+    private void ExecuteLocal(LocalNode localNode)
+    {
+        // LOCAL can only be used inside a procedure (when there's at least one scope on the stack)
+        if (!_context.IsInLocalScope)
+        {
+            throw new InvalidOperationException("LOCAL can only be used inside a procedure");
+        }
+
+        // Add each variable to the current local scope (initialized to 0)
+        foreach (var varName in localNode.Variables)
+        {
+            _context.SetVariable(varName, new NumberValue(0));
         }
     }
 }

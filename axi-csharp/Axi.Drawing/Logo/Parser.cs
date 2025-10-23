@@ -118,6 +118,12 @@ public class Parser
             return ParseFor();
         }
 
+        // LOCAL variable declaration: local "var or local [var1 var2 ...]
+        if (Check(TokenType.Word) && Current.Value.ToLower() == "local")
+        {
+            return ParseLocal();
+        }
+
         // Otherwise, it's a command
         return ParseCommand();
     }
@@ -307,6 +313,73 @@ public class Parser
         Consume(TokenType.RightBracket);
 
         return new ForNode(variable, start, end, increment, body);
+    }
+
+    private AstNode ParseLocal()
+    {
+        Consume(); // consume 'local'
+
+        var variables = new List<string>();
+
+        // Check if it's a list [var1 var2 ...] or single variable "var
+        if (Check(TokenType.LeftBracket))
+        {
+            Consume(); // consume '['
+
+            while (!Check(TokenType.RightBracket) && !Check(TokenType.End))
+            {
+                string varName;
+                if (Check(TokenType.Quote))
+                {
+                    Consume(); // consume '"'
+                    varName = Consume(TokenType.Word).Value;
+                }
+                else if (Check(TokenType.Colon))
+                {
+                    Consume(); // consume ':'
+                    varName = Consume(TokenType.Word).Value;
+                }
+                else if (Check(TokenType.Word))
+                {
+                    varName = Consume(TokenType.Word).Value;
+                }
+                else
+                {
+                    throw new Exception("Expected variable name in LOCAL");
+                }
+
+                variables.Add(varName);
+            }
+
+            Consume(TokenType.RightBracket);
+        }
+        else
+        {
+            // Single variable
+            string varName;
+            if (Check(TokenType.Quote))
+            {
+                Consume(); // consume '"'
+                varName = Consume(TokenType.Word).Value;
+            }
+            else if (Check(TokenType.Colon))
+            {
+                Consume(); // consume ':'
+                varName = Consume(TokenType.Word).Value;
+            }
+            else if (Check(TokenType.Word))
+            {
+                varName = Consume(TokenType.Word).Value;
+            }
+            else
+            {
+                throw new Exception("Expected variable name in LOCAL");
+            }
+
+            variables.Add(varName);
+        }
+
+        return new LocalNode(variables);
     }
 
     private List<AstNode> ParseBlock()

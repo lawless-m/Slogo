@@ -101,3 +101,8 @@ public record WhileNode(AstNode Condition, List<AstNode> Body) : AstNode;
 /// FOR loop: for [variable start end increment] [ commands ]
 /// </summary>
 public record ForNode(string Variable, AstNode Start, AstNode End, AstNode? Increment, List<AstNode> Body) : AstNode;
+
+/// <summary>
+/// LOCAL variable declaration: local "var or local [var1 var2 ...]
+/// </summary>
+public record LocalNode(List<string> Variables) : AstNode;

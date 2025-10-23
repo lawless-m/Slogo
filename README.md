@@ -116,6 +116,8 @@ REPEAT 4 [
 |---------|-------------|---------|
 | `MAKE "var value` | Create or set a variable | `MAKE "size 100` |
 | `:var` | Reference a variable value | `FORWARD :size` |
+| `LOCAL "var` | Declare a local variable in a procedure | `LOCAL "temp` |
+| `LOCAL [var1 var2 ...]` | Declare multiple local variables | `LOCAL [x y z]` |
 
 ### Control Flow Commands
 
@@ -146,6 +148,40 @@ TO DISTANCE :x :y
 END
 
 MAKE "dist DISTANCE 3 4  ; dist = 5
+```
+
+**Local Variables:**
+
+The `LOCAL` command creates variables that are local to the current procedure. Local variables shadow global variables with the same name, and are automatically destroyed when the procedure exits.
+
+```logo
+; Single local variable
+TO TESTLOCAL :n
+  LOCAL "sum
+  MAKE "sum 0
+  REPEAT :n [
+    MAKE "sum :sum + 1
+  ]
+  OUTPUT :sum
+END
+
+; Multiple local variables
+TO CALCULATE :a :b
+  LOCAL [result temp]
+  MAKE "temp :a * 2
+  MAKE "result :temp + :b
+  OUTPUT :result
+END
+
+; Local variables shadow global variables
+MAKE "x 100
+TO SHADOW
+  LOCAL "x
+  MAKE "x 50
+  PRINT :x  ; Prints 50 (local x)
+END
+SHADOW
+PRINT :x  ; Prints 100 (global x unchanged)
 ```
 
 ### Arithmetic & Math Operations

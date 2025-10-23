@@ -32,6 +32,11 @@ public class ExecutionContext
         _scopeStack = new Stack<Dictionary<string, Value>>();
     }
 
+    /// <summary>
+    /// Check if we're currently in a local scope (inside a procedure)
+    /// </summary>
+    public bool IsInLocalScope => _scopeStack.Count > 0;
+
     public void SetVariable(string name, Value value)
     {
         // Check local scope first

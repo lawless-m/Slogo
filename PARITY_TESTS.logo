@@ -677,6 +677,70 @@ END
 ;]
 ; Start=4, End=12, Increment=2: should use values 4, 6, 8, 10, 12
 
+; Test 72: LOCAL variable - single variable
+;MAKE "x 100
+;TO TESTLOCAL1
+;  LOCAL "x
+;  MAKE "x 50
+;  PRINT :x
+;END
+;TESTLOCAL1
+;PRINT :x
+; Should print 50 then 100 (local x is 50, global x remains 100)
+
+; Test 73: LOCAL variables - multiple variables
+;TO TESTLOCAL2
+;  LOCAL [a b c]
+;  MAKE "a 10
+;  MAKE "b 20
+;  MAKE "c 30
+;  PRINT :a + :b + :c
+;END
+;TESTLOCAL2
+; Should print 60
+
+; Test 74: LOCAL variable shadowing
+;MAKE "value 999
+;TO TESTLOCAL3
+;  LOCAL "value
+;  MAKE "value 42
+;  FORWARD :value
+;END
+;HOME
+;CLEAR
+;TESTLOCAL3
+;PRINT :value
+; Should move forward 42 pixels and print 999 (global value unchanged)
+
+; Test 75: LOCAL in nested procedure calls
+;MAKE "count 0
+;TO OUTER
+;  LOCAL "count
+;  MAKE "count 10
+;  INNER
+;  PRINT :count
+;END
+;TO INNER
+;  LOCAL "count
+;  MAKE "count 5
+;  PRINT :count
+;END
+;OUTER
+;PRINT :count
+; Should print 5, 10, 0 (inner local, outer local, global)
+
+; Test 76: LOCAL with FOR loop
+;TO TESTLOCAL4 :n
+;  LOCAL "sum
+;  MAKE "sum 0
+;  FOR [i 1 :n] [
+;    MAKE "sum :sum + :i
+;  ]
+;  OUTPUT :sum
+;END
+;PRINT TESTLOCAL4 10
+; Should print 55
+
 ; ====================
 ; Feature Checklist
 ; ====================
@@ -705,6 +769,7 @@ END
 ; ✓ WHILE loops (conditional iteration)
 ; ✓ Lists and list operations (literals, FIRST, LAST, BUTFIRST, BUTLAST, ITEM, COUNT, EMPTY?, FPUT, LPUT, LIST, SENTENCE)
 ; ✓ FOR loops (counted iteration with variable)
+; ✓ LOCAL variables (local scope declarations)
 
 ; ====================
 ; Missing Features (TODO for future parity)
@@ -713,4 +778,3 @@ END
 ; ✗ FILL command
 ; ✗ ARC command
 ; ✗ TEXT/LABEL commands
-; ✗ Local variables (LOCAL command)

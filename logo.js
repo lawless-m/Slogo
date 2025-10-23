@@ -38,8 +38,49 @@ class LogoInterpreter {
         this.penColorRGB = [0, 0, 0]; // Store RGB values for PENCOLOR query
         this.penSize = 2;
         this.turtleVisible = true;
-        this.variables = {}; // Variable storage
+        this.variables = {}; // Global variable storage
+        this.scopeStack = []; // Stack of local scopes for procedures
         this.updateTurtleDisplay();
+    }
+
+    // Push a new local scope for procedure calls
+    pushScope(localVars = {}) {
+        this.scopeStack.push(localVars);
+    }
+
+    // Pop the current local scope
+    popScope() {
+        if (this.scopeStack.length > 0) {
+            this.scopeStack.pop();
+        }
+    }
+
+    // Set a variable in current scope (local if in procedure, global otherwise)
+    setVariable(name, value) {
+        if (this.scopeStack.length > 0) {
+            // We're in a local scope - set in the most recent scope
+            this.scopeStack[this.scopeStack.length - 1][name] = value;
+        } else {
+            // Global scope
+            this.variables[name] = value;
+        }
+    }
+
+    // Get a variable value, checking local scopes first, then global
+    getVariable(name) {
+        // Check local scopes (most recent first)
+        for (let i = this.scopeStack.length - 1; i >= 0; i--) {
+            if (name in this.scopeStack[i]) {
+                return this.scopeStack[i][name];
+            }
+        }
+
+        // Check global scope
+        if (name in this.variables) {
+            return this.variables[name];
+        }
+
+        throw new Error(`Variable '${name}' is not defined`);
     }
 
     clear() {
@@ -584,10 +625,12 @@ class LogoInterpreter {
         // Variable reference (:varname)
         if (token.startsWith(':')) {
             const varName = token.substring(1).toUpperCase();
-            if (this.variables.hasOwnProperty(varName)) {
-                return { value: this.variables[varName], nextIndex: index + 1 };
+            try {
+                const value = this.getVariable(varName);
+                return { value, nextIndex: index + 1 };
+            } catch (e) {
+                throw new Error(`Undefined variable: ${varName}`);
             }
-            throw new Error(`Undefined variable: ${varName}`);
         }
 
         // Check if it's a procedure call
@@ -662,7 +705,7 @@ class LogoInterpreter {
                 const varToken = tokens[++i];
                 const varName = varToken.startsWith('"') ? varToken.substring(1).toUpperCase() : varToken.toUpperCase();
                 const { value } = this.getNextValue(tokens, i + 1);
-                this.variables[varName] = value;
+                this.setVariable(varName, value);
                 i++; // Skip the value token(s)
             }
 
@@ -1009,8 +1052,39 @@ class LogoInterpreter {
                             const varToken = tokens[++i];
                             const varName = varToken.startsWith('"') ? varToken.substring(1).toUpperCase() : varToken.toUpperCase();
                             const { value, nextIndex } = this.getNextValue(tokens, i + 1);
-                            this.variables[varName] = value;
+                            this.setVariable(varName, value);
                             i = nextIndex - 1;
+                        }
+                        break;
+
+                    case 'LOCAL':
+                        {
+                            // LOCAL "varname or LOCAL [var1 var2 ...]
+                            if (this.scopeStack.length === 0) {
+                                throw new Error('LOCAL can only be used inside a procedure');
+                            }
+
+                            const nextToken = tokens[++i];
+
+                            if (nextToken === '[') {
+                                // LOCAL [var1 var2 ...]
+                                const { block: varList, nextIndex } = this.parseBlock(tokens, i + 1);
+                                for (const varToken of varList) {
+                                    const varName = varToken.startsWith('"')
+                                        ? varToken.substring(1).toUpperCase()
+                                        : varToken.toUpperCase();
+                                    // Initialize local variable to 0 (or could be undefined)
+                                    this.scopeStack[this.scopeStack.length - 1][varName] = 0;
+                                }
+                                i = nextIndex - 1;
+                            } else {
+                                // LOCAL "varname
+                                const varName = nextToken.startsWith('"')
+                                    ? nextToken.substring(1).toUpperCase()
+                                    : nextToken.toUpperCase();
+                                // Initialize local variable to 0 (or could be undefined)
+                                this.scopeStack[this.scopeStack.length - 1][varName] = 0;
+                            }
                         }
                         break;
 
@@ -1106,13 +1180,13 @@ class LogoInterpreter {
                             // Execute the FOR loop
                             if (increment > 0) {
                                 for (let loopVar = start; loopVar <= end; loopVar += increment) {
-                                    this.variables[varName] = loopVar;
+                                    this.setVariable(varName, loopVar);
                                     await this.execute(commandBlock);
                                     await this.sleep(10);
                                 }
                             } else if (increment < 0) {
                                 for (let loopVar = start; loopVar >= end; loopVar += increment) {
-                                    this.variables[varName] = loopVar;
+                                    this.setVariable(varName, loopVar);
                                     await this.execute(commandBlock);
                                     await this.sleep(10);
                                 }
@@ -1217,35 +1291,31 @@ class LogoInterpreter {
                                     argIndex = nextIndex;
                                 }
 
-                                // Save current variable scope
-                                const savedVars = { ...this.variables };
-
-                                // Set parameters as variables
+                                // Create local scope with parameter bindings
+                                const localScope = {};
                                 for (let p = 0; p < proc.params.length; p++) {
-                                    this.variables[proc.params[p]] = args[p];
+                                    localScope[proc.params[p]] = args[p];
                                 }
 
-                                // Execute procedure body and catch OUTPUT/STOP
+                                // Push scope and execute procedure body
+                                this.pushScope(localScope);
                                 try {
                                     await this.execute(proc.body);
                                 } catch (error) {
                                     if (error instanceof OutputException) {
-                                        // Restore variable scope before returning
-                                        this.variables = savedVars;
                                         // Store return value for expression evaluation
                                         this.lastReturnValue = error.value;
                                         // Don't throw further, just return normally
                                     } else if (error instanceof StopException) {
                                         // STOP just exits the procedure
-                                        this.variables = savedVars;
                                         // Don't throw further, just return normally
                                     } else {
                                         throw error;
                                     }
+                                } finally {
+                                    // Always pop scope, even on errors
+                                    this.popScope();
                                 }
-
-                                // Restore variable scope
-                                this.variables = savedVars;
 
                                 // Update index
                                 i = argIndex - 1;
