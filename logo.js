@@ -182,7 +182,8 @@ class LogoInterpreter {
                          'SETXY', 'SETX', 'SETY', 'SETHEADING', 'SETH', 'HOME', 'PENUP', 'PU',
                          'PENDOWN', 'PD', 'PENSIZE', 'SETPENSIZE', 'SETPENCOLOR', 'SETPC', 'SETPENRGB',
                          'CIRCLE', 'BOX', 'SQUARE', 'MAKE', 'CLEAR', 'CLEARSCREEN', 'CS',
-                         'HIDETURTLE', 'HT', 'SHOWTURTLE', 'ST', 'REPEAT', 'TO', 'END'];
+                         'HIDETURTLE', 'HT', 'SHOWTURTLE', 'ST', 'REPEAT', 'WHILE', 'FOR', 'DOTIMES',
+                         'IF', 'IFELSE', 'TO', 'END'];
 
         while (i < tokens.length) {
             const token = tokens[i];
@@ -1572,6 +1573,41 @@ class LogoInterpreter {
                                 }
                             } else {
                                 throw new Error('FOR loop increment cannot be zero');
+                            }
+
+                            i = afterCommands - 1;
+                        }
+                        break;
+
+                    case 'DOTIMES':
+                        {
+                            // DOTIMES [variable count] [commands]
+                            // Simpler than FOR - always counts from 1 to count by 1
+                            if (tokens[i + 1] !== '[') {
+                                throw new Error('DOTIMES requires control list in brackets: DOTIMES [var count] [commands]');
+                            }
+
+                            // Parse the control list [variable count]
+                            const { block: controlList, nextIndex: afterControl } = this.parseBlock(tokens, i + 2);
+
+                            if (controlList.length !== 2) {
+                                throw new Error('DOTIMES control list must be [variable count]');
+                            }
+
+                            const varName = controlList[0].replace(':', '').replace('"', '').toUpperCase();
+                            const count = this.evaluateExpression(controlList[1]);
+
+                            if (tokens[afterControl] !== '[') {
+                                throw new Error('DOTIMES requires a command block in brackets');
+                            }
+
+                            const { block: commandBlock, nextIndex: afterCommands } = this.parseBlock(tokens, afterControl + 1);
+
+                            // Execute the DOTIMES loop (1 to count)
+                            for (let loopVar = 1; loopVar <= Math.floor(count); loopVar++) {
+                                this.setVariable(varName, loopVar);
+                                await this.execute(commandBlock);
+                                await this.sleep(this.getDelay());
                             }
 
                             i = afterCommands - 1;
