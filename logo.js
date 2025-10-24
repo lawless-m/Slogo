@@ -1148,6 +1148,17 @@ class LogoInterpreter {
                 tokens.push(']');
                 tokenMeta.push({ line: tokenStartLine, column: tokenStartColumn });
                 inBracket = false;
+            } else if (char === '(' || char === ')') {
+                // Handle parentheses for expressions
+                if (current.trim()) {
+                    tokens.push(current.trim());
+                    tokenMeta.push({ line: tokenStartLine, column: tokenStartColumn });
+                    current = '';
+                }
+                tokenStartLine = line;
+                tokenStartColumn = column;
+                tokens.push(char);
+                tokenMeta.push({ line: tokenStartLine, column: tokenStartColumn });
             } else if (char === '<' || char === '>' || char === '=') {
                 // Handle comparison operators
                 if (current.trim()) {
