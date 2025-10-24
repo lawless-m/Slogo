@@ -1171,13 +1171,8 @@ class LogoInterpreter {
                 }
                 tokens.push(char);
                 tokenMeta.push({ line: tokenStartLine, column: tokenStartColumn });
-            } else if (/\s/.test(char) && !inBracket) {
-                if (current.trim()) {
-                    tokens.push(current.trim());
-                    tokenMeta.push({ line: tokenStartLine, column: tokenStartColumn });
-                    current = '';
-                }
-            } else if (char === '\n') {
+            } else if (/\s/.test(char)) {
+                // Always split tokens on whitespace, even inside brackets
                 if (current.trim()) {
                     tokens.push(current.trim());
                     tokenMeta.push({ line: tokenStartLine, column: tokenStartColumn });
