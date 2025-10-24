@@ -103,6 +103,12 @@ public record WhileNode(AstNode Condition, List<AstNode> Body) : AstNode;
 public record ForNode(string Variable, AstNode Start, AstNode End, AstNode? Increment, List<AstNode> Body) : AstNode;
 
 /// <summary>
+/// DOTIMES loop: dotimes [variable count] [ commands ]
+/// Simpler than FOR - always counts from 1 to count by 1
+/// </summary>
+public record DoTimesNode(string Variable, AstNode Count, List<AstNode> Body) : AstNode;
+
+/// <summary>
 /// LOCAL variable declaration: local "var or local [var1 var2 ...]
 /// </summary>
 public record LocalNode(List<string> Variables) : AstNode;

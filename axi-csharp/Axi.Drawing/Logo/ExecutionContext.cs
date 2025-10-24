@@ -16,6 +16,7 @@ public class ExecutionContext
     private readonly Dictionary<string, Value> _variables;
     private readonly Dictionary<string, Procedure> _procedures;
     private readonly Stack<Dictionary<string, Value>> _scopeStack;
+    private readonly Stack<int> _repeatCountStack; // Stack to track REPCOUNT in nested REPEAT loops
 
     public Turtle Turtle { get; }
 
@@ -30,6 +31,7 @@ public class ExecutionContext
         _variables = new Dictionary<string, Value>(StringComparer.OrdinalIgnoreCase);
         _procedures = new Dictionary<string, Procedure>(StringComparer.OrdinalIgnoreCase);
         _scopeStack = new Stack<Dictionary<string, Value>>();
+        _repeatCountStack = new Stack<int>();
     }
 
     /// <summary>
@@ -91,4 +93,37 @@ public class ExecutionContext
     {
         OnOutput?.Invoke(value);
     }
+
+    /// <summary>
+    /// Push a repeat count onto the stack (for REPCOUNT query)
+    /// </summary>
+    public void PushRepeatCount(int count)
+    {
+        _repeatCountStack.Push(count);
+    }
+
+    /// <summary>
+    /// Pop the current repeat count from the stack
+    /// </summary>
+    public void PopRepeatCount()
+    {
+        if (_repeatCountStack.Count > 0)
+            _repeatCountStack.Pop();
+    }
+
+    /// <summary>
+    /// Get the current repeat count (for REPCOUNT query)
+    /// </summary>
+    public int GetRepeatCount()
+    {
+        if (_repeatCountStack.Count == 0)
+            throw new InvalidOperationException("REPCOUNT can only be used inside a REPEAT loop");
+
+        return _repeatCountStack.Peek();
+    }
+
+    /// <summary>
+    /// Check if we're currently inside a REPEAT loop
+    /// </summary>
+    public bool IsInRepeatLoop => _repeatCountStack.Count > 0;
 }
