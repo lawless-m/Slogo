@@ -1195,7 +1195,7 @@ class LogoInterpreter {
 
     parseBlock(tokens, index) {
         const block = [];
-        let depth = 0;
+        let depth = 1;  // Start at 1 since we've already consumed the opening '['
         let i = index;
 
         while (i < tokens.length) {
