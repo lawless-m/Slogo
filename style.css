@@ -86,6 +86,39 @@ header p {
     transform: translateY(-2px);
 }
 
+.btn-danger {
+    background: #ef4444;
+    color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+    background: #dc2626;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
+}
+
+.btn-danger:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-small {
+    padding: 5px 10px;
+    font-size: 12px;
+    background: #e2e8f0;
+    color: #334155;
+}
+
+.btn-small:hover {
+    background: #cbd5e1;
+}
+
+.zoom-controls {
+    display: flex;
+    gap: 5px;
+    margin-left: auto;
+}
+
 .editor-container {
     margin-bottom: 15px;
 }

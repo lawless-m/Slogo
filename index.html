@@ -17,6 +17,7 @@
             <div class="editor-section">
                 <div class="toolbar">
                     <button id="runButton" class="btn btn-primary">Run</button>
+                    <button id="stopButton" class="btn btn-danger" disabled>Stop</button>
                     <button id="clearButton" class="btn btn-secondary">Clear Canvas</button>
                     <button id="resetButton" class="btn btn-secondary">Reset Turtle</button>
                     <button id="exampleButton" class="btn btn-secondary">Load Example</button>
@@ -49,6 +50,12 @@ REPEAT 4 [
                         Speed: <input type="range" id="speed" min="1" max="100" value="50">
                         <span id="speedValue">50</span>
                     </label>
+                    <div class="zoom-controls">
+                        <button id="zoomInButton" class="btn btn-small">+</button>
+                        <button id="zoomOutButton" class="btn btn-small">-</button>
+                        <button id="zoomFitButton" class="btn btn-small">Fit</button>
+                        <button id="zoomResetButton" class="btn btn-small">100%</button>
+                    </div>
                 </div>
                 <div class="canvas-container">
                     <svg id="canvas" width="600" height="600">
@@ -91,7 +98,8 @@ REPEAT 4 [
                         <li><code>PENUP</code> or <code>PU</code> - Lift pen (stop drawing)</li>
                         <li><code>PENDOWN</code> or <code>PD</code> - Lower pen (start drawing)</li>
                         <li><code>PENSIZE n</code> - Set pen width to n pixels</li>
-                        <li><code>SETPENCOLOR r g b</code> - Set pen color (RGB 0-255)</li>
+                        <li><code>SETPENCOLOR n</code> or <code>SETPC n</code> - Set pen color from palette (0-15)</li>
+                        <li><code>SETPENRGB r g b</code> - Set pen color using RGB values (0-255)</li>
                     </ul>
                 </div>
                 <div class="command-group">
@@ -111,7 +119,8 @@ REPEAT 4 [
                         <li><code>MAKE "var value</code> - Set variable</li>
                         <li><code>:var</code> - Use variable value</li>
                         <li><code>LOCAL "var</code> or <code>LOCAL [var1 var2]</code> - Declare local variable(s)</li>
-                        <li><code>REPEAT n [commands]</code> - Repeat commands n times</li>
+                        <li><code>REPEAT n [commands]</code> - Repeat commands n times (use REPCOUNT for iteration)</li>
+                        <li><code>DOTIMES [var count] [commands]</code> - Like REPEAT but with named variable (1 to count)</li>
                         <li><code>WHILE condition [commands]</code> - Loop while condition is true</li>
                         <li><code>FOR [var start end increment] [commands]</code> - Loop with counter (increment optional)</li>
                         <li><code>TO name :param1 :param2 ... [commands] END</code> - Define procedure</li>
@@ -124,8 +133,9 @@ REPEAT 4 [
                     <h3>Arithmetic & Math</h3>
                     <ul>
                         <li><code>+, -, *, /</code> - Basic arithmetic</li>
+                        <li><code>^</code> - Exponentiation (e.g., <code>2 ^ 3</code> = 8)</li>
                         <li><code>MOD</code> - Modulo operation</li>
-                        <li><code>POWER base exp</code> or <code>POW base exp</code> - Exponentiation (base^exp)</li>
+                        <li><code>POWER base exp</code> or <code>POW base exp</code> - Exponentiation function</li>
                         <li><code>SQRT n</code> - Square root</li>
                         <li><code>SIN n, COS n, TAN n</code> - Trigonometry (degrees)</li>
                         <li><code>ABS n</code> - Absolute value</li>
@@ -169,6 +179,7 @@ REPEAT 4 [
                         <li><code>PENDOWN?</code> or <code>PENDOWNP</code> - Returns 1 if pen is down, 0 if up</li>
                         <li><code>PENSIZE</code> - Returns current pen size</li>
                         <li><code>PENCOLOR</code> - Returns current pen color as list [r g b]</li>
+                        <li><code>REPCOUNT</code> - Returns current iteration number in REPEAT loop (1-indexed)</li>
                     </ul>
                 </div>
                 <div class="command-group">
@@ -203,6 +214,6 @@ REPEAT 4 [
         </div>
     </div>
 
-    <script src="logo.js"></script>
+    <script src="logo.js?v=20251024-14"></script>
 </body>
 </html>

@@ -53,6 +53,7 @@ This file contains Logo programs that test all supported features. Both implemen
 
 | Feature | JavaScript | C# | Test # |
 |---------|------------|-----|---------|
+| Semicolon Comments | ✅ | ✅ | 0 |
 | Basic Movement | ✅ | ✅ | 1 |
 | Variables | ✅ | ✅ | 2 |
 | Arithmetic (+,-,*,/) | ✅ | ✅ | 3 |

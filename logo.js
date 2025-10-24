@@ -27,6 +27,39 @@ class LogoInterpreter {
 
         this.reset();
         this.procedures = {};
+        this.sourceCode = ''; // Store original source for error reporting
+        this.tokens = []; // Store tokens for error reporting
+        this.tokenMeta = []; // Store metadata (line, column) for each token
+        this.stopRequested = false; // Flag to stop execution
+        this.repeatCountStack = []; // Stack to track REPCOUNT in nested REPEAT loops
+        this.speed = 50; // Animation speed (1-100, higher = faster)
+        this.zoom = 1.0; // Zoom level (1.0 = 100%)
+        this.panX = 0; // Pan offset X
+        this.panY = 0; // Pan offset Y
+        this.boundingBox = { minX: 0, maxX: 0, minY: 0, maxY: 0 }; // Track drawing bounds
+
+        // Initialize viewBox to show entire canvas
+        this.applyZoomAndPan();
+
+        // Standard Logo color palette (16 colors)
+        this.colorPalette = [
+            [0, 0, 0],       // 0: black
+            [0, 0, 255],     // 1: blue
+            [0, 255, 0],     // 2: green
+            [0, 255, 255],   // 3: cyan
+            [255, 0, 0],     // 4: red
+            [255, 0, 255],   // 5: magenta
+            [255, 255, 0],   // 6: yellow
+            [255, 255, 255], // 7: white
+            [165, 42, 42],   // 8: brown
+            [210, 180, 140], // 9: tan
+            [0, 128, 0],     // 10: dark green
+            [127, 255, 212], // 11: aquamarine
+            [250, 128, 114], // 12: salmon
+            [128, 0, 128],   // 13: purple
+            [255, 165, 0],   // 14: orange
+            [128, 128, 128]  // 15: gray
+        ];
     }
 
     reset() {
@@ -85,14 +118,78 @@ class LogoInterpreter {
 
     clear() {
         this.drawingLayer.innerHTML = '';
+        this.boundingBox = { minX: 0, maxX: 0, minY: 0, maxY: 0 };
+    }
+
+    updateBoundingBox(x, y) {
+        this.boundingBox.minX = Math.min(this.boundingBox.minX, x);
+        this.boundingBox.maxX = Math.max(this.boundingBox.maxX, x);
+        this.boundingBox.minY = Math.min(this.boundingBox.minY, y);
+        this.boundingBox.maxY = Math.max(this.boundingBox.maxY, y);
+    }
+
+    setZoom(zoom, panX = this.panX, panY = this.panY) {
+        this.zoom = Math.max(0.1, Math.min(10, zoom)); // Clamp between 0.1x and 10x
+        this.panX = panX;
+        this.panY = panY;
+        this.applyZoomAndPan();
+    }
+
+    applyZoomAndPan() {
+        const svg = this.canvas;
+        const viewBox = `${this.panX} ${this.panY} ${600 / this.zoom} ${600 / this.zoom}`;
+        svg.setAttribute('viewBox', viewBox);
+    }
+
+    zoomToFit() {
+        const bbox = this.boundingBox;
+
+        // Convert Logo coordinates to screen coordinates
+        // Logo: (0,0) is center, +x right, +y up
+        // Screen: (0,0) is top-left, +x right, +y down
+        // Logo (x,y) → Screen (300+x, 300-y)
+        const screenMinX = this.centerX + bbox.minX;
+        const screenMaxX = this.centerX + bbox.maxX;
+        const screenMinY = this.centerY - bbox.maxY;  // Y is inverted
+        const screenMaxY = this.centerY - bbox.minY;
+
+        const width = screenMaxX - screenMinX;
+        const height = screenMaxY - screenMinY;
+
+        if (width === 0 && height === 0) {
+            // No drawing, reset to default
+            this.setZoom(1.0, 0, 0);
+            return;
+        }
+
+        // Add 10% padding
+        const paddingFactor = 0.1;
+        const paddingX = width * paddingFactor;
+        const paddingY = height * paddingFactor;
+
+        const contentWidth = width + 2 * paddingX;
+        const contentHeight = height + 2 * paddingY;
+
+        // Calculate zoom to fit both dimensions
+        const zoomX = 600 / contentWidth;
+        const zoomY = 600 / contentHeight;
+        const newZoom = Math.min(zoomX, zoomY);
+
+        // Calculate pan to center the content
+        const panX = screenMinX - paddingX;
+        const panY = screenMinY - paddingY;
+
+        this.setZoom(newZoom, panX, panY);
     }
 
     updateTurtleDisplay() {
         const screenX = this.centerX + this.x;
         const screenY = this.centerY - this.y;
 
-        // Turtle heading: 0=right, 90=up, convert to SVG rotation (subtract 90 to make turtle point in right direction)
-        const rotation = this.heading - 90;
+        // Turtle heading: 0=right, 90=up, convert to SVG rotation
+        // SVG rotation is clockwise: 0=up, 90=right, 180=down, 270=left
+        // Logo heading: 0=right, 90=up, 180=left, 270=down
+        const rotation = 90 - this.heading;
 
         this.turtleElement.setAttribute('transform',
             `translate(${screenX}, ${screenY}) rotate(${rotation})`);
@@ -152,9 +249,10 @@ class LogoInterpreter {
 
         const keywords = ['FORWARD', 'FD', 'BACKWARD', 'BK', 'BACK', 'LEFT', 'LT', 'RIGHT', 'RT',
                          'SETXY', 'SETX', 'SETY', 'SETHEADING', 'SETH', 'HOME', 'PENUP', 'PU',
-                         'PENDOWN', 'PD', 'PENSIZE', 'SETPENSIZE', 'SETPENCOLOR', 'SETPC',
+                         'PENDOWN', 'PD', 'PENSIZE', 'SETPENSIZE', 'SETPENCOLOR', 'SETPC', 'SETPENRGB',
                          'CIRCLE', 'BOX', 'SQUARE', 'MAKE', 'CLEAR', 'CLEARSCREEN', 'CS',
-                         'HIDETURTLE', 'HT', 'SHOWTURTLE', 'ST', 'REPEAT', 'TO', 'END'];
+                         'HIDETURTLE', 'HT', 'SHOWTURTLE', 'ST', 'REPEAT', 'WHILE', 'FOR', 'DOTIMES',
+                         'IF', 'IFELSE', 'TO', 'END'];
 
         while (i < tokens.length) {
             const token = tokens[i];
@@ -183,12 +281,16 @@ class LogoInterpreter {
 
     // Helper: collect and evaluate expression, return value and next index
     getNextValue(tokens, index) {
-        const { tokens: exprTokens, nextIndex } = this.collectExpressionTokens(tokens, index);
+        const { tokens: exprTokens, nextIndex: collectedEndIndex } = this.collectExpressionTokens(tokens, index);
         if (exprTokens.length === 0) {
-            throw new Error('Expected expression');
+            const prevToken = index > 0 ? tokens[index - 1] : 'start';
+            const nextToken = index < tokens.length ? tokens[index] : 'end of program';
+            throw new Error(`Expected expression after "${prevToken}", got "${nextToken}"`);
         }
         const result = this.parseExpression(exprTokens, 0);
-        return { value: result.value, nextIndex };
+        // Convert parseExpression's nextIndex (relative to exprTokens) back to original tokens
+        const actualNextIndex = index + result.nextIndex;
+        return { value: result.value, nextIndex: actualNextIndex };
     }
 
     evaluateExpression(tokens, startIndex = 0) {
@@ -319,22 +421,40 @@ class LogoInterpreter {
 
     // Multiplication, division, and modulo (medium precedence)
     parseMulDiv(tokens, index) {
-        let { value, nextIndex } = this.parseUnary(tokens, index);
+        let { value, nextIndex } = this.parseExponentiation(tokens, index);
 
         while (nextIndex < tokens.length) {
             const op = tokens[nextIndex];
             if (op === '*') {
-                const right = this.parseUnary(tokens, nextIndex + 1);
+                const right = this.parseExponentiation(tokens, nextIndex + 1);
                 value = value * right.value;
                 nextIndex = right.nextIndex;
             } else if (op === '/') {
-                const right = this.parseUnary(tokens, nextIndex + 1);
+                const right = this.parseExponentiation(tokens, nextIndex + 1);
                 if (right.value === 0) throw new Error('Division by zero');
                 value = value / right.value;
                 nextIndex = right.nextIndex;
             } else if (op.toUpperCase() === 'MOD') {
-                const right = this.parseUnary(tokens, nextIndex + 1);
+                const right = this.parseExponentiation(tokens, nextIndex + 1);
                 value = value % right.value;
+                nextIndex = right.nextIndex;
+            } else {
+                break;
+            }
+        }
+
+        return { value, nextIndex };
+    }
+
+    // Exponentiation (higher precedence than multiplication)
+    parseExponentiation(tokens, index) {
+        let { value, nextIndex } = this.parseUnary(tokens, index);
+
+        while (nextIndex < tokens.length) {
+            const op = tokens[nextIndex];
+            if (op === '^') {
+                const right = this.parseUnary(tokens, nextIndex + 1);
+                value = Math.pow(value, right.value);
                 nextIndex = right.nextIndex;
             } else {
                 break;
@@ -463,7 +583,7 @@ class LogoInterpreter {
         }
 
         // Query functions (no arguments)
-        if (['XCOR', 'YCOR', 'HEADING', 'PENDOWN?', 'PENDOWNP', 'PENSIZE', 'PENCOLOR'].includes(func)) {
+        if (['XCOR', 'YCOR', 'HEADING', 'PENDOWN?', 'PENDOWNP', 'PENSIZE', 'PENCOLOR', 'REPCOUNT'].includes(func)) {
             let result;
             switch (func) {
                 case 'XCOR':
@@ -484,6 +604,12 @@ class LogoInterpreter {
                     break;
                 case 'PENCOLOR':
                     result = this.penColorRGB.slice(); // Return a copy of the RGB array
+                    break;
+                case 'REPCOUNT':
+                    if (this.repeatCountStack.length === 0) {
+                        throw new Error('REPCOUNT can only be used inside a REPEAT loop');
+                    }
+                    result = this.repeatCountStack[this.repeatCountStack.length - 1];
                     break;
             }
             return { value: result, nextIndex: index + 1 };
@@ -1031,6 +1157,10 @@ class LogoInterpreter {
         line.setAttribute('stroke-width', this.penSize);
         line.setAttribute('stroke-linecap', 'round');
         this.drawingLayer.appendChild(line);
+
+        // Update bounding box for zoom-to-fit
+        this.updateBoundingBox(x1, y1);
+        this.updateBoundingBox(x2, y2);
     }
 
     log(message) {
@@ -1046,53 +1176,140 @@ class LogoInterpreter {
         return value;
     }
 
+    // Format error message with context
+    formatError(error, tokenIndex) {
+        let msg = `Error: ${error.message}\n`;
+
+        if (tokenIndex !== undefined && this.tokens && this.tokens.length > 0 && this.tokenMeta && this.tokenMeta.length > 0) {
+            // Show the problematic token with line number
+            const token = this.tokens[tokenIndex] || '';
+            const meta = this.tokenMeta[tokenIndex] || { line: '?', column: '?' };
+            msg += `At line ${meta.line}, column ${meta.column}: "${token}"\n`;
+
+            // Show context (5 tokens before and after)
+            const start = Math.max(0, tokenIndex - 5);
+            const end = Math.min(this.tokens.length, tokenIndex + 6);
+            const contextTokens = this.tokens.slice(start, end);
+
+            // Build context string with pointer to error
+            const contextStr = contextTokens.map((t, i) => {
+                const actualIndex = start + i;
+                if (actualIndex === tokenIndex) {
+                    return `>>> ${t} <<<`;
+                }
+                return t;
+            }).join(' ');
+
+            msg += `Context: ${contextStr}`;
+        }
+
+        return msg;
+    }
+
     tokenize(code) {
         let tokens = [];
+        let tokenMeta = []; // Store metadata (line, column) for each token
         let current = '';
         let inBracket = false;
+        let line = 1;
+        let column = 1;
+        let tokenStartLine = 1;
+        let tokenStartColumn = 1;
 
         for (let i = 0; i < code.length; i++) {
             const char = code[i];
 
+            // Track line and column
+            if (char === '\n') {
+                line++;
+                column = 1;
+            } else {
+                column++;
+            }
+
+            // Handle semicolon comments - skip to end of line
+            if (char === ';') {
+                // Save any current token before the comment
+                if (current.trim()) {
+                    tokens.push(current.trim());
+                    tokenMeta.push({ line: tokenStartLine, column: tokenStartColumn });
+                    current = '';
+                }
+                // Skip everything until newline
+                while (i < code.length && code[i] !== '\n') {
+                    i++;
+                    column++;
+                }
+                continue;
+            }
+
+            // Start tracking token position when we begin a new token
+            if (current === '' && char !== ' ' && char !== '\t' && char !== '\n' && char !== '\r') {
+                tokenStartLine = line;
+                tokenStartColumn = column;
+            }
+
             if (char === '[') {
                 if (current.trim()) {
                     tokens.push(current.trim());
+                    tokenMeta.push({ line: tokenStartLine, column: tokenStartColumn });
                     current = '';
                 }
+                tokenStartLine = line;
+                tokenStartColumn = column;
                 tokens.push('[');
+                tokenMeta.push({ line: tokenStartLine, column: tokenStartColumn });
                 inBracket = true;
             } else if (char === ']') {
                 if (current.trim()) {
                     tokens.push(current.trim());
+                    tokenMeta.push({ line: tokenStartLine, column: tokenStartColumn });
                     current = '';
                 }
+                tokenStartLine = line;
+                tokenStartColumn = column;
                 tokens.push(']');
+                tokenMeta.push({ line: tokenStartLine, column: tokenStartColumn });
                 inBracket = false;
+            } else if (char === '(' || char === ')') {
+                // Handle parentheses for expressions
+                if (current.trim()) {
+                    tokens.push(current.trim());
+                    tokenMeta.push({ line: tokenStartLine, column: tokenStartColumn });
+                    current = '';
+                }
+                tokenStartLine = line;
+                tokenStartColumn = column;
+                tokens.push(char);
+                tokenMeta.push({ line: tokenStartLine, column: tokenStartColumn });
             } else if (char === '<' || char === '>' || char === '=') {
                 // Handle comparison operators
                 if (current.trim()) {
                     tokens.push(current.trim());
+                    tokenMeta.push({ line: tokenStartLine, column: tokenStartColumn });
                     current = '';
                 }
+                tokenStartLine = line;
+                tokenStartColumn = column;
                 // Check for two-character operators: <=, >=, <>
                 if (i + 1 < code.length) {
                     const nextChar = code[i + 1];
                     if ((char === '<' && (nextChar === '=' || nextChar === '>')) ||
                         (char === '>' && nextChar === '=')) {
                         tokens.push(char + nextChar);
+                        tokenMeta.push({ line: tokenStartLine, column: tokenStartColumn });
                         i++; // Skip next character
+                        column++; // Update column for skipped character
                         continue;
                     }
                 }
                 tokens.push(char);
-            } else if (/\s/.test(char) && !inBracket) {
+                tokenMeta.push({ line: tokenStartLine, column: tokenStartColumn });
+            } else if (/\s/.test(char)) {
+                // Always split tokens on whitespace, even inside brackets
                 if (current.trim()) {
                     tokens.push(current.trim());
-                    current = '';
-                }
-            } else if (char === '\n') {
-                if (current.trim()) {
-                    tokens.push(current.trim());
+                    tokenMeta.push({ line: tokenStartLine, column: tokenStartColumn });
                     current = '';
                 }
             } else {
@@ -1102,14 +1319,17 @@ class LogoInterpreter {
 
         if (current.trim()) {
             tokens.push(current.trim());
+            tokenMeta.push({ line: tokenStartLine, column: tokenStartColumn });
         }
 
+        // Store metadata for error reporting
+        this.tokenMeta = tokenMeta;
         return tokens;
     }
 
     parseBlock(tokens, index) {
         const block = [];
-        let depth = 0;
+        let depth = 1;  // Start at 1 since we've already consumed the opening '['
         let i = index;
 
         while (i < tokens.length) {
@@ -1131,7 +1351,11 @@ class LogoInterpreter {
             i++;
         }
 
-        throw new Error('Unmatched bracket');
+        // Better error message for unmatched brackets
+        const contextStart = Math.max(0, index - 3);
+        const contextEnd = Math.min(tokens.length, i + 3);
+        const context = tokens.slice(contextStart, contextEnd).join(' ');
+        throw new Error(`Unmatched bracket - missing closing ']'. Context: ${context}`);
     }
 
     async execute(tokens, startIndex = 0, endIndex = null) {
@@ -1139,6 +1363,12 @@ class LogoInterpreter {
         let i = startIndex;
 
         while (i < end) {
+            // Check if stop was requested
+            if (this.stopRequested) {
+                this.log('Execution stopped by user');
+                return;
+            }
+
             const token = tokens[i].toUpperCase();
 
             try {
@@ -1240,6 +1470,18 @@ class LogoInterpreter {
                     case 'SETPENCOLOR':
                     case 'SETPC':
                         {
+                            // SETPENCOLOR takes 1 arg (palette index 0-15)
+                            const { value, nextIndex } = this.getNextValue(tokens, i + 1);
+                            const index = Math.floor(value) % this.colorPalette.length;
+                            const [r, g, b] = this.colorPalette[index];
+                            this.setPenColor(r, g, b);
+                            i = nextIndex - 1;
+                        }
+                        break;
+
+                    case 'SETPENRGB':
+                        {
+                            // SETPENRGB takes 3 args (r g b, 0-255 each)
                             const r = this.getNextValue(tokens, i + 1);
                             const g = this.getNextValue(tokens, r.nextIndex);
                             const b = this.getNextValue(tokens, g.nextIndex);
@@ -1339,8 +1581,11 @@ class LogoInterpreter {
                             }
                             const { block, nextIndex } = this.parseBlock(tokens, afterExpr + 1);
                             for (let j = 0; j < Math.floor(count); j++) {
+                                // Push current iteration (1-indexed) for REPCOUNT
+                                this.repeatCountStack.push(j + 1);
                                 await this.execute(block);
-                                await this.sleep(10);
+                                this.repeatCountStack.pop();
+                                await this.sleep(this.getDelay());
                             }
                             i = nextIndex - 1;
                         }
@@ -1369,7 +1614,7 @@ class LogoInterpreter {
                                 const { value: condition } = this.getNextValue(condTokens, 0);
                                 if (!condition) break;
                                 await this.execute(block);
-                                await this.sleep(10);
+                                await this.sleep(this.getDelay());
                             }
 
                             i = nextIndex - 1;
@@ -1391,11 +1636,11 @@ class LogoInterpreter {
                                 throw new Error('FOR control list must be [variable start end] or [variable start end increment]');
                             }
 
-                            const varName = controlList[0].replace(':', '').replace('"', '');
-                            const { value: start } = this.getNextValue(controlList, 1);
-                            const { value: end } = this.getNextValue(controlList, 2);
+                            const varName = controlList[0].replace(':', '').replace('"', '').toUpperCase();
+                            const start = this.evaluateExpression(controlList[1]);
+                            const end = this.evaluateExpression(controlList[2]);
                             const increment = controlList.length === 4
-                                ? this.getNextValue(controlList, 3).value
+                                ? this.evaluateExpression(controlList[3])
                                 : (start <= end ? 1 : -1);
 
                             if (tokens[afterControl] !== '[') {
@@ -1409,16 +1654,51 @@ class LogoInterpreter {
                                 for (let loopVar = start; loopVar <= end; loopVar += increment) {
                                     this.setVariable(varName, loopVar);
                                     await this.execute(commandBlock);
-                                    await this.sleep(10);
+                                    await this.sleep(this.getDelay());
                                 }
                             } else if (increment < 0) {
                                 for (let loopVar = start; loopVar >= end; loopVar += increment) {
                                     this.setVariable(varName, loopVar);
                                     await this.execute(commandBlock);
-                                    await this.sleep(10);
+                                    await this.sleep(this.getDelay());
                                 }
                             } else {
                                 throw new Error('FOR loop increment cannot be zero');
+                            }
+
+                            i = afterCommands - 1;
+                        }
+                        break;
+
+                    case 'DOTIMES':
+                        {
+                            // DOTIMES [variable count] [commands]
+                            // Simpler than FOR - always counts from 1 to count by 1
+                            if (tokens[i + 1] !== '[') {
+                                throw new Error('DOTIMES requires control list in brackets: DOTIMES [var count] [commands]');
+                            }
+
+                            // Parse the control list [variable count]
+                            const { block: controlList, nextIndex: afterControl } = this.parseBlock(tokens, i + 2);
+
+                            if (controlList.length !== 2) {
+                                throw new Error('DOTIMES control list must be [variable count]');
+                            }
+
+                            const varName = controlList[0].replace(':', '').replace('"', '').toUpperCase();
+                            const count = this.evaluateExpression(controlList[1]);
+
+                            if (tokens[afterControl] !== '[') {
+                                throw new Error('DOTIMES requires a command block in brackets');
+                            }
+
+                            const { block: commandBlock, nextIndex: afterCommands } = this.parseBlock(tokens, afterControl + 1);
+
+                            // Execute the DOTIMES loop (1 to count)
+                            for (let loopVar = 1; loopVar <= Math.floor(count); loopVar++) {
+                                this.setVariable(varName, loopVar);
+                                await this.execute(commandBlock);
+                                await this.sleep(this.getDelay());
                             }
 
                             i = afterCommands - 1;
@@ -1569,12 +1849,21 @@ class LogoInterpreter {
                         }
                 }
             } catch (error) {
-                this.log(`Error at token ${i}: ${error.message}`);
+                // Format and log the error with context
+                const errorMsg = this.formatError(error, i);
+                this.log(errorMsg);
+                error.logged = true; // Mark as logged to avoid duplicate messages
                 throw error;
             }
 
             i++;
         }
+    }
+
+    getDelay() {
+        // Convert speed (1-100) to delay in ms
+        // Speed 100 = 1ms, Speed 50 = 11ms, Speed 1 = 101ms
+        return 101 - this.speed;
     }
 
     sleep(ms) {
@@ -1583,14 +1872,26 @@ class LogoInterpreter {
 
     async run(code) {
         this.output.textContent = '';
+        this.sourceCode = code; // Store for error reporting
+        this.stopRequested = false; // Reset stop flag
 
         try {
-            const tokens = this.tokenize(code);
-            await this.execute(tokens);
-            this.log('Program completed successfully!');
+            this.tokens = this.tokenize(code); // Store for error reporting
+            await this.execute(this.tokens);
+            if (!this.stopRequested) {
+                this.log('Program completed successfully!');
+            }
         } catch (error) {
-            this.log(`Error: ${error.message}`);
+            // Don't log the error here - it's already logged in execute()
+            // Just let it bubble up
+            if (!error.logged) {
+                this.log(`Error: ${error.message}`);
+            }
         }
+    }
+
+    stop() {
+        this.stopRequested = true;
     }
 }
 
@@ -1600,6 +1901,7 @@ document.addEventListener('DOMContentLoaded', () => {
     interpreter = new LogoInterpreter();
 
     const runButton = document.getElementById('runButton');
+    const stopButton = document.getElementById('stopButton');
     const clearButton = document.getElementById('clearButton');
     const resetButton = document.getElementById('resetButton');
     const exampleButton = document.getElementById('exampleButton');
@@ -1611,7 +1913,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     runButton.addEventListener('click', () => {
         const code = codeEditor.value;
-        interpreter.run(code);
+        runButton.disabled = true;
+        stopButton.disabled = false;
+        interpreter.run(code).finally(() => {
+            runButton.disabled = false;
+            stopButton.disabled = true;
+        });
+    });
+
+    stopButton.addEventListener('click', () => {
+        interpreter.stop();
+        stopButton.disabled = true;
     });
 
     clearButton.addEventListener('click', () => {
@@ -1639,8 +1951,8 @@ RIGHT 90
 FORWARD 100 - :size       ; Subtraction
 
 ; 2. Growing spiral with math
-HOME
 PENUP
+HOME
 SETXY -150 100
 PENDOWN
 SETPENCOLOR 255 0 128
@@ -1652,8 +1964,8 @@ REPEAT 20 [
 ]
 
 ; 3. Math functions - Random circles
-HOME
 PENUP
+HOME
 SETPENCOLOR 0 128 255
 REPEAT 8 [
   SETXY RANDOM 200 - 100 RANDOM 200 - 100
@@ -1663,13 +1975,13 @@ REPEAT 8 [
 ]
 
 ; 4. Trigonometry - Parametric curve
-HOME
 PENUP
-SETXY -100 0
+HOME
+SETXY 100 0
 PENDOWN
 SETPENCOLOR 128 0 255
 PENSIZE 2
-MAKE "angle 0
+MAKE "angle 10
 REPEAT 36 [
   SETXY 100 * COS :angle 100 * SIN :angle
   MAKE "angle :angle + 10
@@ -1683,16 +1995,16 @@ TO POLYGON :sides :size
   ]
 END
 
-HOME
 PENUP
+HOME
 SETXY 100 -100
 PENDOWN
 SETPENCOLOR 255 128 0
 POLYGON 7 40
 
 ; 6. Nested expressions
-HOME
 PENUP
+HOME
 SETXY -100 -100
 PENDOWN
 SETPENCOLOR 0 255 0
@@ -1714,7 +2026,9 @@ SQUARE :base + SQRT 100   ; sqrt(100) = 10, so 40x40 square
     });
 
     speedInput.addEventListener('input', (e) => {
-        speedValue.textContent = e.target.value;
+        const speed = parseInt(e.target.value);
+        speedValue.textContent = speed;
+        interpreter.speed = speed;
     });
 
     codeEditor.addEventListener('keydown', (e) => {
@@ -1725,5 +2039,45 @@ SQUARE :base + SQRT 100   ; sqrt(100) = 10, so 40x40 square
             codeEditor.value = codeEditor.value.substring(0, start) + '  ' + codeEditor.value.substring(end);
             codeEditor.selectionStart = codeEditor.selectionEnd = start + 2;
         }
+    });
+
+    // Zoom controls
+    const zoomInButton = document.getElementById('zoomInButton');
+    const zoomOutButton = document.getElementById('zoomOutButton');
+    const zoomFitButton = document.getElementById('zoomFitButton');
+    const zoomResetButton = document.getElementById('zoomResetButton');
+
+    zoomInButton.addEventListener('click', () => {
+        const oldZoom = interpreter.zoom;
+        const newZoom = oldZoom * 1.2;
+
+        // Keep center of view in the same place
+        const oldWidth = 600 / oldZoom;
+        const newWidth = 600 / newZoom;
+        const newPanX = interpreter.panX + (oldWidth - newWidth) / 2;
+        const newPanY = interpreter.panY + (oldWidth - newWidth) / 2;
+
+        interpreter.setZoom(newZoom, newPanX, newPanY);
+    });
+
+    zoomOutButton.addEventListener('click', () => {
+        const oldZoom = interpreter.zoom;
+        const newZoom = oldZoom / 1.2;
+
+        // Keep center of view in the same place
+        const oldWidth = 600 / oldZoom;
+        const newWidth = 600 / newZoom;
+        const newPanX = interpreter.panX + (oldWidth - newWidth) / 2;
+        const newPanY = interpreter.panY + (oldWidth - newWidth) / 2;
+
+        interpreter.setZoom(newZoom, newPanX, newPanY);
+    });
+
+    zoomFitButton.addEventListener('click', () => {
+        interpreter.zoomToFit();
+    });
+
+    zoomResetButton.addEventListener('click', () => {
+        interpreter.setZoom(1.0, 0, 0);
     });
 });

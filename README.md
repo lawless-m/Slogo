@@ -32,6 +32,7 @@ No installation required!
 
 ## Features
 
+- **Comments** - Use semicolons (`;`) for comments that extend to the end of the line
 - **Arithmetic expressions** - Full math support: `FORWARD 50 + 30`, `RIGHT 360 / :sides`
 - **Math functions** - SQRT, SIN, COS, RANDOM, ABS, ROUND, and more
 - **Variables** - `MAKE "size 100` and `:size` syntax
@@ -70,6 +71,24 @@ REPEAT 4 [
 ```
 
 ## Command Reference
+
+### Comments
+
+Logo supports single-line comments using the semicolon character (`;`). Everything from the semicolon to the end of the line is ignored by the interpreter.
+
+```logo
+; This is a comment
+FORWARD 100  ; Move forward (this is also a comment)
+
+; Comments are useful for documenting your code
+TO SQUARE :size
+  ; Draw a square with the given size
+  REPEAT 4 [
+    FORWARD :size  ; Each side
+    RIGHT 90       ; Turn 90 degrees
+  ]
+END
+```
 
 ### Movement Commands
 

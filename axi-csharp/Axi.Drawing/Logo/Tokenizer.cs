@@ -25,6 +25,8 @@ public class Tokenizer
         while (_position < _input.Length)
         {
             SkipWhitespace();
+            SkipComment();
+            SkipWhitespace();  // Skip whitespace after comment too
             if (_position >= _input.Length)
                 break;
 
@@ -41,6 +43,16 @@ public class Tokenizer
     {
         while (_position < _input.Length && char.IsWhiteSpace(_input[_position]))
             _position++;
+    }
+
+    private void SkipComment()
+    {
+        // If we hit a semicolon, skip to end of line
+        if (_position < _input.Length && _input[_position] == ';')
+        {
+            while (_position < _input.Length && _input[_position] != '\n')
+                _position++;
+        }
     }
 
     private Token? ReadToken()
