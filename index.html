@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logo Interpreter</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Logo Interpreter</h1>
+            <p>A JavaScript implementation of Logo turtle graphics using SVG</p>
+        </header>
+
+        <div class="main-content">
+            <div class="editor-section">
+                <div class="toolbar">
+                    <button id="runButton" class="btn btn-primary">Run</button>
+                    <button id="clearButton" class="btn btn-secondary">Clear Canvas</button>
+                    <button id="resetButton" class="btn btn-secondary">Reset Turtle</button>
+                    <button id="exampleButton" class="btn btn-secondary">Load Example</button>
+                </div>
+
+                <div class="editor-container">
+                    <textarea id="codeEditor" placeholder="Enter Logo commands here...
+Example:
+REPEAT 4 [
+  FORWARD 100
+  RIGHT 90
+]"></textarea>
+                </div>
+
+                <div class="output-container">
+                    <div class="output-header">Output</div>
+                    <pre id="output"></pre>
+                </div>
+            </div>
+
+            <div class="canvas-section">
+                <div class="canvas-toolbar">
+                    <label>
+                        Pen Color: <input type="color" id="penColor" value="#000000">
+                    </label>
+                    <label>
+                        Background: <input type="color" id="bgColor" value="#ffffff">
+                    </label>
+                    <label>
+                        Speed: <input type="range" id="speed" min="1" max="100" value="50">
+                        <span id="speedValue">50</span>
+                    </label>
+                </div>
+                <div class="canvas-container">
+                    <svg id="canvas" width="600" height="600">
+                        <g id="drawingLayer"></g>
+                        <g id="turtleLayer">
+                            <g id="turtle" transform="translate(300, 300)">
+                                <polygon points="0,-10 -5,10 5,10" fill="#00aa00" stroke="#006600" stroke-width="1"/>
+                            </g>
+                        </g>
+                    </svg>
+                </div>
+                <div class="turtle-info">
+                    <span>Position: (<span id="turtleX">0</span>, <span id="turtleY">0</span>)</span>
+                    <span>Heading: <span id="turtleHeading">0</span>°</span>
+                    <span>Pen: <span id="turtlePen">Down</span></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="help-section">
+            <h2>Available Commands</h2>
+            <div class="commands-grid">
+                <div class="command-group">
+                    <h3>Movement</h3>
+                    <ul>
+                        <li><code>FORWARD n</code> or <code>FD n</code> - Move forward n pixels</li>
+                        <li><code>BACKWARD n</code> or <code>BK n</code> - Move backward n pixels</li>
+                        <li><code>LEFT n</code> or <code>LT n</code> - Turn left n degrees</li>
+                        <li><code>RIGHT n</code> or <code>RT n</code> - Turn right n degrees</li>
+                        <li><code>SETXY x y</code> - Move to position (x, y)</li>
+                        <li><code>SETX n</code> - Set X position to n</li>
+                        <li><code>SETY n</code> - Set Y position to n</li>
+                        <li><code>SETHEADING n</code> or <code>SETH n</code> - Set heading (0=right, 90=up)</li>
+                        <li><code>HOME</code> - Return to center (0, 0) facing up</li>
+                    </ul>
+                </div>
+                <div class="command-group">
+                    <h3>Pen Control</h3>
+                    <ul>
+                        <li><code>PENUP</code> or <code>PU</code> - Lift pen (stop drawing)</li>
+                        <li><code>PENDOWN</code> or <code>PD</code> - Lower pen (start drawing)</li>
+                        <li><code>PENSIZE n</code> - Set pen width to n pixels</li>
+                        <li><code>SETPENCOLOR r g b</code> - Set pen color (RGB 0-255)</li>
+                    </ul>
+                </div>
+                <div class="command-group">
+                    <h3>Display & Shapes</h3>
+                    <ul>
+                        <li><code>CLEAR</code> - Clear all drawings</li>
+                        <li><code>HIDETURTLE</code> or <code>HT</code> - Hide the turtle</li>
+                        <li><code>SHOWTURTLE</code> or <code>ST</code> - Show the turtle</li>
+                        <li><code>CIRCLE radius</code> - Draw a circle</li>
+                        <li><code>BOX width height</code> - Draw a rectangle</li>
+                        <li><code>SQUARE size</code> - Draw a square</li>
+                    </ul>
+                </div>
+                <div class="command-group">
+                    <h3>Variables & Control</h3>
+                    <ul>
+                        <li><code>MAKE "var value</code> - Set variable</li>
+                        <li><code>:var</code> - Use variable value</li>
+                        <li><code>LOCAL "var</code> or <code>LOCAL [var1 var2]</code> - Declare local variable(s)</li>
+                        <li><code>REPEAT n [commands]</code> - Repeat commands n times</li>
+                        <li><code>WHILE condition [commands]</code> - Loop while condition is true</li>
+                        <li><code>FOR [var start end increment] [commands]</code> - Loop with counter (increment optional)</li>
+                        <li><code>TO name :param1 :param2 ... [commands] END</code> - Define procedure</li>
+                        <li><code>OUTPUT value</code> - Return value from procedure</li>
+                        <li><code>STOP</code> - Exit procedure without returning value</li>
+                        <li><code>PRINT value</code> or <code>PR value</code> - Output value to console</li>
+                    </ul>
+                </div>
+                <div class="command-group">
+                    <h3>Arithmetic & Math</h3>
+                    <ul>
+                        <li><code>+, -, *, /</code> - Basic arithmetic</li>
+                        <li><code>MOD</code> - Modulo operation</li>
+                        <li><code>POWER base exp</code> or <code>POW base exp</code> - Exponentiation (base^exp)</li>
+                        <li><code>SQRT n</code> - Square root</li>
+                        <li><code>SIN n, COS n, TAN n</code> - Trigonometry (degrees)</li>
+                        <li><code>ABS n</code> - Absolute value</li>
+                        <li><code>ROUND n, FLOOR n, CEILING n</code> - Rounding</li>
+                        <li><code>RANDOM n</code> - Random integer 0 to n-1</li>
+                        <li><code>( )</code> - Parentheses for grouping</li>
+                    </ul>
+                </div>
+                <div class="command-group">
+                    <h3>Comparisons</h3>
+                    <ul>
+                        <li><code>&lt;</code> - Less than</li>
+                        <li><code>&gt;</code> - Greater than</li>
+                        <li><code>=</code> - Equal to</li>
+                        <li><code>&lt;=</code> - Less than or equal</li>
+                        <li><code>&gt;=</code> - Greater than or equal</li>
+                        <li><code>&lt;&gt;</code> - Not equal</li>
+                    </ul>
+                </div>
+                <div class="command-group">
+                    <h3>Logical Operators</h3>
+                    <ul>
+                        <li><code>AND</code> - Logical AND</li>
+                        <li><code>OR</code> - Logical OR</li>
+                        <li><code>NOT</code> - Logical NOT</li>
+                    </ul>
+                </div>
+                <div class="command-group">
+                    <h3>Conditionals</h3>
+                    <ul>
+                        <li><code>IF condition [commands]</code> - Execute if true</li>
+                        <li><code>IFELSE condition [true] [false]</code> - Conditional execution</li>
+                    </ul>
+                </div>
+                <div class="command-group">
+                    <h3>Query Functions</h3>
+                    <ul>
+                        <li><code>XCOR</code> - Returns current X coordinate</li>
+                        <li><code>YCOR</code> - Returns current Y coordinate</li>
+                        <li><code>HEADING</code> - Returns current heading (0-360)</li>
+                        <li><code>PENDOWN?</code> or <code>PENDOWNP</code> - Returns 1 if pen is down, 0 if up</li>
+                        <li><code>PENSIZE</code> - Returns current pen size</li>
+                        <li><code>PENCOLOR</code> - Returns current pen color as list [r g b]</li>
+                    </ul>
+                </div>
+                <div class="command-group">
+                    <h3>Lists & List Operations</h3>
+                    <ul>
+                        <li><code>[item1 item2 ...]</code> - List literal</li>
+                        <li><code>FIRST list</code> - Returns first element</li>
+                        <li><code>LAST list</code> - Returns last element</li>
+                        <li><code>BUTFIRST list</code> or <code>BF list</code> - All but first element</li>
+                        <li><code>BUTLAST list</code> or <code>BL list</code> - All but last element</li>
+                        <li><code>ITEM n list</code> - Get nth element (1-indexed)</li>
+                        <li><code>COUNT list</code> - Returns list length</li>
+                        <li><code>EMPTY? list</code> - Returns 1 if empty, 0 otherwise</li>
+                        <li><code>FPUT item list</code> - Add item to front of list</li>
+                        <li><code>LPUT item list</code> - Add item to end of list</li>
+                        <li><code>LIST item1 item2</code> - Create list from items</li>
+                        <li><code>SENTENCE list1 list2</code> or <code>SE list1 list2</code> - Flatten/concatenate</li>
+                        <li><code>MEMBER? item list</code> or <code>MEMBERP item list</code> - Check if item in list</li>
+                        <li><code>POSITION item list</code> - Find 1-based index (0 if not found)</li>
+                    </ul>
+                </div>
+                <div class="command-group">
+                    <h3>Higher-Order Functions</h3>
+                    <ul>
+                        <li><code>MAP "proc list</code> - Apply procedure to each element</li>
+                        <li><code>FILTER "pred list</code> - Keep elements where predicate is true</li>
+                        <li><code>REDUCE "op list</code> - Reduce list to single value</li>
+                        <li><code>APPLY "proc arglist</code> - Call procedure with argument list</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="logo.js"></script>
+</body>
+</html>

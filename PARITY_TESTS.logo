@@ -1,0 +1,854 @@
+; =========================================
+; Logo Implementation Parity Test Suite
+; =========================================
+; Run this file in both JavaScript and C# implementations
+; to verify they support the same features.
+
+; Test 1: Basic movement
+;CLEAR
+;HOME
+;FORWARD 100
+;RIGHT 90
+;FORWARD 100
+
+; Test 2: Variables
+;CLEAR
+;HOME
+;MAKE "size 80
+;FORWARD :size
+;RIGHT 90
+;FORWARD :size
+
+; Test 3: Arithmetic expressions
+;CLEAR
+;HOME
+;MAKE "x 50
+;FORWARD :x + 30        ; Should be 80
+;RIGHT 90
+;FORWARD :x * 2         ; Should be 100
+;RIGHT 90
+;FORWARD 100 - :x       ; Should be 50
+;RIGHT 90
+;FORWARD 360 / 4        ; Should be 90
+
+; Test 4: Parentheses
+;CLEAR
+;HOME
+;FORWARD (10 + 20) * 2  ; Should be 60
+;RIGHT 90
+;FORWARD 10 + 20 * 2    ; Should be 50 (precedence)
+
+; Test 5: Math functions - SQRT
+;CLEAR
+;HOME
+;FORWARD SQRT 100       ; Should be 10
+
+; Test 6: Math functions - Trigonometry
+;CLEAR
+;HOME
+;MAKE "angle 0
+;REPEAT 4 [
+;  SETXY 100 * COS :angle 100 * SIN :angle
+;  MAKE "angle :angle + 90
+;]
+
+; Test 7: Math functions - ABS and ROUND
+;CLEAR
+;HOME
+;FORWARD ABS -50        ; Should be 50
+;RIGHT 90
+;FORWARD ROUND 37.6     ; Should be 38
+
+; Test 8: Procedures without parameters
+TO SQUARE_PROC
+  REPEAT 4 [
+    FORWARD 50
+    RIGHT 90
+  ]
+END
+
+;CLEAR
+;HOME
+;SQUARE_PROC
+
+; Test 9: Procedures with parameters
+TO POLY :sides :length
+  REPEAT :sides [
+    FORWARD :length
+    RIGHT 360 / :sides
+  ]
+END
+
+;CLEAR
+;HOME
+;POLY 6 50              ; Hexagon
+
+; Test 10: Variable modification
+;CLEAR
+;HOME
+;MAKE "counter 0
+;REPEAT 5 [
+;  FORWARD :counter
+;  RIGHT 90
+;  MAKE "counter :counter + 20  ; Increment by 20
+;]
+
+; Test 11: Built-in shapes
+;CLEAR
+;HOME
+;CIRCLE 40
+;PENUP
+;FORWARD 100
+;PENDOWN
+;SQUARE 50
+;PENUP
+;FORWARD 100
+;PENDOWN
+;BOX 60 40
+
+; Test 12: Nested expressions
+;CLEAR
+;HOME
+;MAKE "base 10
+;FORWARD :base + :base * 2 + SQRT :base  ; Should be: 10 + 20 + 3.16 ≈ 33
+
+; Test 13: MOD operator
+;CLEAR
+;HOME
+;MAKE "x 17
+;FORWARD :x MOD 5       ; Should be 2
+
+; Test 14: Unary minus
+;CLEAR
+;HOME
+;MAKE "neg -50
+;FORWARD ABS :neg       ; Should be 50
+;RIGHT 90
+;FORWARD -(-30)         ; Double negative, should be 30
+
+; Test 15: Complex arithmetic with variables
+;CLEAR
+;HOME
+;MAKE "a 10
+;MAKE "b 20
+;MAKE "c 5
+;FORWARD (:a + :b) * :c / 2    ; Should be (10+20)*5/2 = 75
+
+; Test 16: Comparison operators
+;CLEAR
+;HOME
+;MAKE "x 10
+;IF :x > 5 [FORWARD 50]         ; Should move forward 50
+;RIGHT 90
+;IF :x < 5 [FORWARD 50]         ; Should not move
+;RIGHT 90
+;IF :x = 10 [FORWARD 50]        ; Should move forward 50
+
+; Test 17: IFELSE conditional
+;CLEAR
+;HOME
+;MAKE "size 60
+;IFELSE :size > 50 [
+;  FORWARD :size
+;] [
+;  FORWARD 20
+;]
+; Should move forward 60
+
+; Test 18: Logical operators - AND
+;CLEAR
+;HOME
+;MAKE "x 30
+;IF (:x > 20) AND (:x < 40) [
+;  FORWARD 80             ; Should execute
+;]
+
+; Test 19: Logical operators - OR
+;CLEAR
+;HOME
+;MAKE "x 15
+;IF (:x < 10) OR (:x > 12) [
+;  FORWARD 70             ; Should execute (15 > 12)
+;]
+
+; Test 20: Logical operators - NOT
+;CLEAR
+;HOME
+;MAKE "flag 0
+;IF NOT :flag [
+;  FORWARD 60             ; Should execute (NOT 0 = 1)
+;]
+
+; Test 21: Comparison in expressions
+;CLEAR
+;HOME
+;MAKE "a 10
+;MAKE "b 20
+;FORWARD (:a < :b) * 100  ; Should be 1 * 100 = 100
+
+; Test 22: All comparison operators
+;CLEAR
+;HOME
+;IF 5 < 10 [FORWARD 10]   ; Less than
+;IF 10 > 5 [FORWARD 10]   ; Greater than
+;IF 5 = 5 [FORWARD 10]    ; Equal
+;IF 5 <= 5 [FORWARD 10]   ; Less or equal
+;IF 10 >= 5 [FORWARD 10]  ; Greater or equal
+;IF 5 <> 6 [FORWARD 10]   ; Not equal
+; Should move forward 60 total
+
+; Test 23: Query functions - XCOR, YCOR
+;CLEAR
+;HOME
+;FORWARD 50
+;RIGHT 90
+;FORWARD 30
+;MAKE "x XCOR
+;MAKE "y YCOR
+;IF :x = 30 [FORWARD 10]    ; Should be at x=30
+;IF :y = 50 [FORWARD 10]    ; Should be at y=50
+; Should move forward 20 total
+
+; Test 24: Query function - HEADING
+;CLEAR
+;HOME
+;RIGHT 90
+;MAKE "dir HEADING
+;IF :dir = 0 [FORWARD 20]   ; Should be facing 0 degrees (right)
+;LEFT 90
+;MAKE "dir2 HEADING
+;IF :dir2 = 90 [FORWARD 20]  ; Should be facing 90 degrees (up)
+; Should move forward 40 total
+
+; Test 25: Query function - PENDOWN?
+;CLEAR
+;HOME
+;IF PENDOWN? [FORWARD 30]   ; Pen should be down initially
+;PENUP
+;IF NOT PENDOWN? [FORWARD 30]  ; Pen should be up now
+; Should move forward 60 total
+
+; Test 26: Using queries in expressions
+;CLEAR
+;HOME
+;FORWARD 100
+;RIGHT 90
+;FORWARD 50
+;FORWARD XCOR + YCOR        ; 50 + 100 = 150
+;FORWARD HEADING * 2        ; 0 * 2 = 0 (no movement)
+; Should be at position (50, 100) then move 150 more
+
+; Test 27: Saving and restoring position
+;CLEAR
+;HOME
+;FORWARD 80
+;RIGHT 45
+;FORWARD 60
+;MAKE "savedX XCOR
+;MAKE "savedY YCOR
+;MAKE "savedH HEADING
+;HOME                       ; Go back to center
+;SETXY :savedX :savedY      ; Restore position
+;SETHEADING :savedH         ; Restore heading
+;FORWARD 20                 ; Continue from saved position
+
+; Test 28: OUTPUT - simple return value
+TO DOUBLE :n
+  OUTPUT :n * 2
+END
+
+;CLEAR
+;HOME
+;FORWARD DOUBLE 50          ; Should move forward 100
+;RIGHT 90
+;MAKE "result DOUBLE 25
+;FORWARD :result            ; Should move forward 50
+
+; Test 29: OUTPUT - multiple parameters
+TO SUM :a :b
+  OUTPUT :a + :b
+END
+
+;CLEAR
+;HOME
+;FORWARD SUM 30 20          ; Should move forward 50
+
+; Test 30: OUTPUT - with calculations
+TO DISTANCE :x :y
+  OUTPUT SQRT (:x * :x + :y * :y)
+END
+
+;CLEAR
+;HOME
+;MAKE "dist DISTANCE 3 4    ; Should be 5
+;FORWARD :dist * 10         ; Should move forward 50
+
+; Test 31: OUTPUT - used in expressions
+TO TRIPLE :n
+  OUTPUT :n * 3
+END
+
+;CLEAR
+;HOME
+;FORWARD TRIPLE 10 + 20     ; Should be (10 * 3) + 20 = 50
+
+; Test 32: OUTPUT - early return
+TO CHECKVALUE :n
+  IF :n < 0 [OUTPUT 0]
+  OUTPUT :n
+END
+
+;CLEAR
+;HOME
+;FORWARD CHECKVALUE -5      ; Should move forward 0
+;RIGHT 90
+;FORWARD CHECKVALUE 40      ; Should move forward 40
+
+; Test 33: OUTPUT - nested procedure calls
+TO QUADRUPLE :n
+  OUTPUT DOUBLE DOUBLE :n
+END
+
+;CLEAR
+;HOME
+;FORWARD QUADRUPLE 10       ; Should move forward 40
+
+; Test 34: STOP - exits procedure without returning value
+TO CONDITIONAL_MOVE :n
+  IF :n < 0 [STOP]
+  FORWARD :n
+END
+
+;CLEAR
+;HOME
+;CONDITIONAL_MOVE -10       ; Should not move (stops early)
+;RIGHT 90
+;CONDITIONAL_MOVE 50        ; Should move forward 50
+
+; Test 35: STOP - used in loops
+TO FIND_LIMIT :max
+  MAKE "i 0
+  REPEAT 100 [
+    IF :i > :max [STOP]
+    FORWARD 5
+    RIGHT 10
+    MAKE "i :i + 1
+  ]
+END
+
+;CLEAR
+;HOME
+;FIND_LIMIT 10              ; Should stop after 10 iterations
+
+; Test 36: PRINT - outputs values (check console/output)
+;CLEAR
+;HOME
+;MAKE "x 42
+;PRINT :x                   ; Should print 42
+;PRINT 100 + 50             ; Should print 150
+;PR SQRT 144                ; Should print 12 (PR is alias for PRINT)
+
+; Test 37: PENSIZE query - get current pen size
+;CLEAR
+;HOME
+;MAKE "size PENSIZE
+;FORWARD :size * 20         ; Should move forward 20 (assuming pensize is 1)
+
+; Test 38: POWER function - exponentiation
+;CLEAR
+;HOME
+;FORWARD POWER 2 3          ; Should move forward 8 (2^3)
+;RIGHT 90
+;FORWARD POW 5 2            ; Should move forward 25 (5^2, POW is alias)
+;RIGHT 90
+;MAKE "base 3
+;MAKE "exp 4
+;FORWARD POWER :base :exp   ; Should move forward 81 (3^4)
+
+; Test 39: POWER in expressions
+;CLEAR
+;HOME
+;FORWARD POWER 2 3 + POWER 2 2  ; Should be 8 + 4 = 12
+;RIGHT 90
+;MAKE "x 2
+;FORWARD POWER :x (:x + 1)  ; Should be 2^3 = 8
+
+; Test 40: WHILE loops - basic
+;CLEAR
+;HOME
+;MAKE "count 0
+;WHILE :count < 4 [
+;  FORWARD 30
+;  RIGHT 90
+;  MAKE "count :count + 1
+;]
+; Should draw a square
+
+; Test 41: WHILE loops - with conditions
+;CLEAR
+;HOME
+;MAKE "x 10
+;MAKE "total 0
+;WHILE :x > 0 [
+;  MAKE "total :total + :x
+;  MAKE "x :x - 1
+;]
+;FORWARD :total             ; Should move forward 55 (sum of 1-10)
+
+; Test 42: WHILE loops - nested
+;CLEAR
+;HOME
+;MAKE "outer 0
+;WHILE :outer < 3 [
+;  MAKE "inner 0
+;  WHILE :inner < 4 [
+;    FORWARD 20
+;    RIGHT 90
+;    MAKE "inner :inner + 1
+;  ]
+;  PENUP
+;  FORWARD 70
+;  PENDOWN
+;  MAKE "outer :outer + 1
+;]
+; Should draw 3 squares in a row
+
+; Test 43: WHILE with STOP
+TO WHILE_WITH_STOP :limit
+  MAKE "i 0
+  WHILE :i < 100 [
+    IF :i > :limit [STOP]
+    FORWARD 10
+    RIGHT 15
+    MAKE "i :i + 1
+  ]
+END
+
+;CLEAR
+;HOME
+;WHILE_WITH_STOP 8          ; Should stop after 8 iterations
+
+; Test 44: Combined features - WHILE, POWER, queries
+;CLEAR
+;HOME
+;MAKE "radius 5
+;WHILE :radius < 50 [
+;  CIRCLE :radius
+;  MAKE "radius POWER :radius 1.2    ; Exponential growth
+;  PENUP
+;  FORWARD 10
+;  PENDOWN
+;]
+
+; Test 45: List literals and variables
+;MAKE "nums [10 20 30 40 50]
+;MAKE "colors [255 128 64]
+;MAKE "empty []
+;PRINT :nums           ; Should print [10 20 30 40 50]
+;PRINT :empty          ; Should print []
+
+; Test 46: FIRST and LAST
+;MAKE "mylist [5 10 15 20]
+;PRINT FIRST :mylist   ; Should print 5
+;PRINT LAST :mylist    ; Should print 20
+;MAKE "x FIRST [100 200]
+;FORWARD :x            ; Should move forward 100
+
+; Test 47: BUTFIRST (BF) and BUTLAST (BL)
+;MAKE "list1 [1 2 3 4 5]
+;MAKE "rest BUTFIRST :list1
+;PRINT :rest           ; Should print [2 3 4 5]
+;MAKE "init BUTLAST :list1
+;PRINT :init           ; Should print [1 2 3 4]
+;PRINT BF [10 20]      ; Should print [20]
+;PRINT BL [10 20]      ; Should print [10]
+
+; Test 48: ITEM - access list elements (1-indexed)
+;MAKE "data [100 200 300 400]
+;FORWARD ITEM 1 :data  ; Should move forward 100
+;RIGHT 90
+;FORWARD ITEM 3 :data  ; Should move forward 300
+;MAKE "val ITEM 2 [5 10 15 20]
+;PRINT :val            ; Should print 10
+
+; Test 49: COUNT - get list length
+;MAKE "list [1 2 3 4 5]
+;PRINT COUNT :list     ; Should print 5
+;PRINT COUNT []        ; Should print 0
+;FORWARD COUNT [10 20 30] * 10  ; Should move forward 30
+
+; Test 50: EMPTY? - check if list is empty
+;PRINT EMPTY? []       ; Should print 1 (true)
+;PRINT EMPTY? [1 2]    ; Should print 0 (false)
+;IF EMPTY? [] [FORWARD 50]  ; Should move forward 50
+
+; Test 51: FPUT - add element to front of list
+;MAKE "list [2 3 4]
+;MAKE "new FPUT 1 :list
+;PRINT :new            ; Should print [1 2 3 4]
+;PRINT FPUT 0 [1 2]    ; Should print [0 1 2]
+
+; Test 52: LPUT - add element to end of list
+;MAKE "list [1 2 3]
+;MAKE "new LPUT 4 :list
+;PRINT :new            ; Should print [1 2 3 4]
+;PRINT LPUT 3 [1 2]    ; Should print [1 2 3]
+
+; Test 53: LIST - create list from items
+;MAKE "a 10
+;MAKE "b 20
+;MAKE "pair LIST :a :b
+;PRINT :pair           ; Should print [10 20]
+;PRINT LIST 5 10       ; Should print [5 10]
+
+; Test 54: SENTENCE (SE) - flatten and concatenate
+;MAKE "list1 [1 2]
+;MAKE "list2 [3 4]
+;MAKE "combined SENTENCE :list1 :list2
+;PRINT :combined       ; Should print [1 2 3 4]
+;PRINT SE [10 20] [30 40]  ; Should print [10 20 30 40]
+;PRINT SE 5 10         ; Should print [5 10]
+
+; Test 55: Nested lists
+;MAKE "matrix [[1 2] [3 4]]
+;PRINT FIRST :matrix   ; Should print [1 2]
+;PRINT FIRST FIRST :matrix  ; Should print 1
+;MAKE "row ITEM 2 :matrix
+;PRINT ITEM 1 :row     ; Should print 3
+
+; Test 56: Lists in procedures
+TO SUMLIST :list
+  IF EMPTY? :list [OUTPUT 0]
+  OUTPUT (FIRST :list) + SUMLIST BUTFIRST :list
+END
+
+;MAKE "numbers [10 20 30]
+;PRINT SUMLIST :numbers  ; Should print 60
+
+; Test 57: Building lists iteratively
+;MAKE "result []
+;MAKE "i 1
+;WHILE :i <= 5 [
+;  MAKE "result LPUT :i :result
+;  MAKE "i :i + 1
+;]
+;PRINT :result         ; Should print [1 2 3 4 5]
+
+; Test 58: List manipulation with turtle graphics
+;MAKE "path [50 100 75 125]
+;FORWARD ITEM 1 :path  ; Forward 50
+;RIGHT 90
+;FORWARD ITEM 2 :path  ; Forward 100
+;RIGHT 90
+;FORWARD ITEM 3 :path  ; Forward 75
+;RIGHT 90
+;FORWARD ITEM 4 :path  ; Forward 125
+
+; Test 59: Using COUNT with loops
+;MAKE "moves [20 30 40 50]
+;MAKE "i 1
+;WHILE :i <= COUNT :moves [
+;  FORWARD ITEM :i :moves
+;  RIGHT 90
+;  MAKE "i :i + 1
+;]
+; Should draw a shape with sides 20, 30, 40, 50
+
+; Test 60: PENSIZE query and SETPENSIZE command
+;CLEAR
+;HOME
+;MAKE "oldSize PENSIZE
+;PRINT :oldSize           ; Should print default pen size (2)
+;SETPENSIZE 5
+;MAKE "newSize PENSIZE
+;PRINT :newSize           ; Should print 5
+;FORWARD 100              ; Draw with thick pen
+;SETPENSIZE 1
+;RIGHT 90
+;FORWARD 100              ; Draw with thin pen
+
+; Test 61: PENCOLOR query
+;CLEAR
+;HOME
+;MAKE "color PENCOLOR
+;PRINT :color             ; Should print [0 0 0] (black)
+;PRINT FIRST :color       ; Should print 0
+;PRINT COUNT :color       ; Should print 3
+
+; Test 62: SETPENCOLOR then query
+;SETPENCOLOR 255 0 0      ; Set to red
+;MAKE "red PENCOLOR
+;PRINT :red               ; Should print [255 0 0]
+;FORWARD 100
+;SETPENCOLOR 0 255 0      ; Set to green
+;RIGHT 90
+;FORWARD 100
+
+; Test 63: Using PENCOLOR in expressions
+;SETPENCOLOR 128 64 32
+;MAKE "color PENCOLOR
+;MAKE "r ITEM 1 :color
+;MAKE "g ITEM 2 :color
+;MAKE "b ITEM 3 :color
+;IF :r = 128 [FORWARD 50]
+;IF :g = 64 [FORWARD 50]
+
+; Test 64: Changing pen size dynamically
+;CLEAR
+;HOME
+;MAKE "size 1
+;REPEAT 5 [
+;  SETPENSIZE :size
+;  FORWARD 50
+;  RIGHT 90
+;  MAKE "size :size + 2
+;]
+; Should draw with increasing pen thickness
+
+; Test 65: Basic FOR loop ascending
+;CLEAR
+;HOME
+;FOR [i 1 5 1] [
+;  FORWARD 50
+;  RIGHT 72
+;]
+; Should draw a pentagon
+
+; Test 66: FOR loop with variable in command
+;CLEAR
+;HOME
+;FOR [size 10 100 10] [
+;  FORWARD :size
+;  RIGHT 90
+;]
+; Should draw with increasing lengths
+
+; Test 67: FOR loop descending
+;CLEAR
+;HOME
+;MAKE "x 0
+;FOR [i 10 1 -1] [
+;  MAKE "x :x + :i
+;]
+;PRINT :x
+; Should print 55 (sum from 10 to 1)
+
+; Test 68: FOR loop without explicit increment
+;CLEAR
+;HOME
+;FOR [i 1 4] [
+;  CIRCLE 20
+;  PENUP
+;  FORWARD 50
+;  PENDOWN
+;]
+; Should draw 4 circles with auto-increment of 1
+
+; Test 69: FOR loop descending without explicit increment
+;CLEAR
+;HOME
+;MAKE "result 0
+;FOR [i 5 1] [
+;  MAKE "result :result + :i
+;]
+;PRINT :result
+; Should print 15, auto-decrement detected
+
+; Test 70: Nested FOR loops
+;CLEAR
+;HOME
+;FOR [i 1 3] [
+;  FOR [j 1 4] [
+;    FORWARD 30
+;    RIGHT 90
+;  ]
+;  PENUP
+;  FORWARD 50
+;  PENDOWN
+;]
+; Should draw 3 squares
+
+; Test 71: FOR loop with expressions
+;CLEAR
+;HOME
+;FOR [i 2 * 2 3 * 4 2] [
+;  FORWARD :i
+;  RIGHT 90
+;]
+; Start=4, End=12, Increment=2: should use values 4, 6, 8, 10, 12
+
+; Test 72: LOCAL variable - single variable
+;MAKE "x 100
+;TO TESTLOCAL1
+;  LOCAL "x
+;  MAKE "x 50
+;  PRINT :x
+;END
+;TESTLOCAL1
+;PRINT :x
+; Should print 50 then 100 (local x is 50, global x remains 100)
+
+; Test 73: LOCAL variables - multiple variables
+;TO TESTLOCAL2
+;  LOCAL [a b c]
+;  MAKE "a 10
+;  MAKE "b 20
+;  MAKE "c 30
+;  PRINT :a + :b + :c
+;END
+;TESTLOCAL2
+; Should print 60
+
+; Test 74: LOCAL variable shadowing
+;MAKE "value 999
+;TO TESTLOCAL3
+;  LOCAL "value
+;  MAKE "value 42
+;  FORWARD :value
+;END
+;HOME
+;CLEAR
+;TESTLOCAL3
+;PRINT :value
+; Should move forward 42 pixels and print 999 (global value unchanged)
+
+; Test 75: LOCAL in nested procedure calls
+;MAKE "count 0
+;TO OUTER
+;  LOCAL "count
+;  MAKE "count 10
+;  INNER
+;  PRINT :count
+;END
+;TO INNER
+;  LOCAL "count
+;  MAKE "count 5
+;  PRINT :count
+;END
+;OUTER
+;PRINT :count
+; Should print 5, 10, 0 (inner local, outer local, global)
+
+; Test 76: LOCAL with FOR loop
+;TO TESTLOCAL4 :n
+;  LOCAL "sum
+;  MAKE "sum 0
+;  FOR [i 1 :n] [
+;    MAKE "sum :sum + :i
+;  ]
+;  OUTPUT :sum
+;END
+;PRINT TESTLOCAL4 10
+; Should print 55
+
+; Test 77: MEMBER? - check if item in list
+;PRINT MEMBER? 3 [1 2 3 4 5]
+;PRINT MEMBER? 10 [1 2 3 4 5]
+;PRINT MEMBER? [2 3] [[1 2] [2 3] [3 4]]
+; Should print 1, 0, 1
+
+; Test 78: POSITION - find index of item
+;PRINT POSITION 3 [10 20 30 40]
+;PRINT POSITION 10 [5 10 15 20]
+;PRINT POSITION 99 [1 2 3]
+; Should print 3, 2, 0 (0 means not found)
+
+; Test 79: MAP - apply procedure to each element
+;TO DOUBLE :n
+;  OUTPUT :n * 2
+;END
+;PRINT MAP "DOUBLE [1 2 3 4 5]
+; Should print [2 4 6 8 10]
+
+; Test 80: MAP with lists
+;TO SUMSQUARES :n
+;  OUTPUT (:n * :n) + :n
+;END
+;PRINT MAP "SUMSQUARES [1 2 3 4]
+; Should print [2 6 12 20] (1+1=2, 4+2=6, 9+3=12, 16+4=20)
+
+; Test 81: FILTER - keep only elements matching predicate
+;TO EVEN? :n
+;  OUTPUT (:n MOD 2) = 0
+;END
+;PRINT FILTER "EVEN? [1 2 3 4 5 6 7 8 9 10]
+; Should print [2 4 6 8 10]
+
+; Test 82: FILTER with custom predicate
+;TO GREATERTHAN5? :n
+;  OUTPUT :n > 5
+;END
+;PRINT FILTER "GREATERTHAN5? [1 3 5 7 9 11]
+; Should print [7 9 11]
+
+; Test 83: REDUCE - fold/accumulate operation
+;TO SUM :a :b
+;  OUTPUT :a + :b
+;END
+;PRINT REDUCE "SUM [1 2 3 4 5]
+; Should print 15
+
+; Test 84: REDUCE with multiplication
+;TO MULTIPLY :a :b
+;  OUTPUT :a * :b
+;END
+;PRINT REDUCE "MULTIPLY [1 2 3 4 5]
+; Should print 120 (factorial of 5)
+
+; Test 85: APPLY - call procedure with list of arguments
+;TO ADD3 :a :b :c
+;  OUTPUT :a + :b + :c
+;END
+;PRINT APPLY "ADD3 [10 20 30]
+; Should print 60
+
+; Test 86: Complex higher-order function composition
+;TO SQUARE :n
+;  OUTPUT :n * :n
+;END
+;MAKE "nums [1 2 3 4 5]
+;MAKE "evens FILTER "EVEN? :nums
+;MAKE "squares MAP "SQUARE :evens
+;PRINT :squares
+;PRINT REDUCE "SUM :squares
+; Should print [4 16 36] then 56
+
+; ====================
+; Feature Checklist
+; ====================
+; ✓ Basic movement (FORWARD, BACKWARD, LEFT, RIGHT)
+; ✓ Variables (MAKE, :varname)
+; ✓ Arithmetic operators (+, -, *, /, MOD)
+; ✓ Parentheses for grouping
+; ✓ Math functions (SQRT, SIN, COS, TAN, ABS, ROUND, FLOOR, CEILING)
+; ✓ Procedures without parameters (TO name ... END)
+; ✓ Procedures with parameters (TO name :param ... END)
+; ✓ REPEAT loops
+; ✓ Built-in shapes (CIRCLE, BOX, SQUARE)
+; ✓ Variable increment/modification
+; ✓ Unary operators (-, +)
+; ✓ Proper operator precedence
+; ✓ Nested expressions
+; ✓ IF/IFELSE conditionals
+; ✓ Comparison operators (=, <, >, <=, >=, <>)
+; ✓ Logical operators (AND, OR, NOT)
+; ✓ Query functions (XCOR, YCOR, HEADING, PENDOWN?, PENSIZE, PENCOLOR)
+; ✓ Pen control (PENUP, PENDOWN, SETPENSIZE, SETPENCOLOR)
+; ✓ OUTPUT (return values from procedures)
+; ✓ STOP (exit procedure without returning value)
+; ✓ PRINT/PR (output values to console)
+; ✓ POWER/POW (exponentiation function)
+; ✓ WHILE loops (conditional iteration)
+; ✓ Lists and list operations (literals, FIRST, LAST, BUTFIRST, BUTLAST, ITEM, COUNT, EMPTY?, FPUT, LPUT, LIST, SENTENCE)
+; ✓ List search operations (MEMBER?, MEMBERP, POSITION)
+; ✓ Higher-order functions (MAP, FILTER, REDUCE, APPLY)
+; ✓ FOR loops (counted iteration with variable)
+; ✓ LOCAL variables (local scope declarations)
+
+; ====================
+; Missing Features (TODO for future parity)
+; ====================
+; ✗ String operations
+; ✗ FILL command
+; ✗ ARC command
+; ✗ TEXT/LABEL commands

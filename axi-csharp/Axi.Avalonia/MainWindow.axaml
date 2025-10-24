@@ -1,0 +1,48 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="700"
+        x:Class="Axi.Avalonia.MainWindow"
+        Title="Axi Logo Turtle Graphics"
+        Width="1000" Height="700">
+
+  <Grid RowDefinitions="*,Auto,Auto">
+    <!-- Canvas for drawing -->
+    <Border Grid.Row="0" Background="#F5F5F5" Margin="10">
+      <Canvas Name="DrawingCanvas" Background="White" />
+    </Border>
+
+    <!-- Command input -->
+    <Grid Grid.Row="1" ColumnDefinitions="*,Auto,Auto" Margin="10,0,10,10">
+      <TextBox Name="CommandInput"
+               Grid.Column="0"
+               Watermark="Enter Logo commands (e.g., forward 100, right 90, box 50 30)"
+               VerticalContentAlignment="Center"
+               Margin="0,0,10,0" />
+      <Button Name="RunButton"
+              Grid.Column="1"
+              Content="Run"
+              Padding="20,5"
+              Margin="0,0,10,0" />
+      <Button Name="ClearButton"
+              Grid.Column="2"
+              Content="Clear"
+              Padding="20,5" />
+    </Grid>
+
+    <!-- Status and help -->
+    <StackPanel Grid.Row="2" Margin="10,0,10,10">
+      <TextBlock Name="StatusText"
+                 Text="Ready. Try: repeat 4 [ forward 100 right 90 ] or to square :size [ repeat 4 [ forward :size right 90 ] ] end"
+                 FontSize="12"
+                 Foreground="#666" />
+      <TextBlock FontSize="11" Foreground="#999" Margin="0,5,0,0">
+        Commands: forward/fd, backward/bk, right/rt, left/lt, penup/pu, pendown/pd, box, square, circle, home, clear
+      </TextBlock>
+      <TextBlock FontSize="11" Foreground="#999" Margin="0,2,0,0">
+        Control: repeat N [ commands ], to name :param [ commands ] end, make "var value, :var (use variable)
+      </TextBlock>
+    </StackPanel>
+  </Grid>
+</Window>

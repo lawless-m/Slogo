@@ -1,0 +1,174 @@
+Logo Interpreter Examples
+========================
+
+1. SIMPLE SQUARE
+----------------
+REPEAT 4 [
+  FORWARD 100
+  RIGHT 90
+]
+
+
+2. STAR
+-------
+REPEAT 5 [
+  FORWARD 100
+  RIGHT 144
+]
+
+
+3. HEXAGON
+----------
+REPEAT 6 [
+  FORWARD 80
+  RIGHT 60
+]
+
+
+4. SPIRAL
+---------
+REPEAT 36 [
+  FORWARD 100
+  RIGHT 170
+]
+
+
+5. FLOWER PATTERN
+-----------------
+REPEAT 36 [
+  REPEAT 4 [
+    FORWARD 60
+    RIGHT 90
+  ]
+  RIGHT 10
+]
+
+
+6. COLORFUL TRIANGLE
+--------------------
+SETPENCOLOR 255 0 0
+FORWARD 100
+RIGHT 120
+
+SETPENCOLOR 0 255 0
+FORWARD 100
+RIGHT 120
+
+SETPENCOLOR 0 0 255
+FORWARD 100
+
+
+7. HOUSE
+--------
+; Draw the base
+REPEAT 4 [
+  FORWARD 100
+  RIGHT 90
+]
+
+; Move to roof position
+PENUP
+FORWARD 100
+PENDOWN
+
+; Draw the roof
+RIGHT 30
+FORWARD 100
+RIGHT 120
+FORWARD 100
+
+
+8. CONCENTRIC SQUARES
+---------------------
+REPEAT 10 [
+  REPEAT 4 [
+    FORWARD 20
+    RIGHT 90
+  ]
+  PENUP
+  SETXY 0 0
+  FORWARD 10
+  PENDOWN
+]
+
+
+9. CIRCLE (APPROXIMATED)
+------------------------
+REPEAT 36 [
+  FORWARD 5
+  RIGHT 10
+]
+
+
+10. PROCEDURE EXAMPLE
+---------------------
+TO SQUARE
+  REPEAT 4 [
+    FORWARD 100
+    RIGHT 90
+  ]
+END
+
+SQUARE
+PENUP
+SETXY 150 0
+PENDOWN
+SQUARE
+
+
+11. RAINBOW SPIRAL
+------------------
+CLEAR
+HOME
+
+REPEAT 36 [
+  SETPENCOLOR 255 0 0
+  FORWARD 100
+  RIGHT 170
+
+  SETPENCOLOR 0 0 255
+  FORWARD 100
+  RIGHT 170
+]
+
+
+12. OCTAGON
+-----------
+REPEAT 8 [
+  FORWARD 50
+  RIGHT 45
+]
+
+
+13. DASHED LINE
+---------------
+REPEAT 10 [
+  PENDOWN
+  FORWARD 10
+  PENUP
+  FORWARD 10
+]
+
+
+14. ZIGZAG
+----------
+REPEAT 10 [
+  FORWARD 50
+  RIGHT 120
+  FORWARD 50
+  LEFT 120
+]
+
+
+15. NESTED SQUARES
+------------------
+PENSIZE 2
+SETPENCOLOR 128 0 128
+
+REPEAT 20 [
+  REPEAT 4 [
+    FORWARD 100
+    RIGHT 90
+  ]
+  RIGHT 18
+]
