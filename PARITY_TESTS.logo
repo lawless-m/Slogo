@@ -4,6 +4,12 @@
 ; Run this file in both JavaScript and C# implementations
 ; to verify they support the same features.
 
+; Test 0: Comments (semicolon to end of line)
+; This entire file uses semicolon comments extensively
+; If you can run any test below, comments are working!
+;FORWARD 50  ; This comment should be ignored
+;BACKWARD 50 ; As should this one
+
 ; Test 1: Basic movement
 ;CLEAR
 ;HOME
@@ -816,6 +822,7 @@ END
 ; ====================
 ; Feature Checklist
 ; ====================
+; ✓ Semicolon comments (from ; to end of line)
 ; ✓ Basic movement (FORWARD, BACKWARD, LEFT, RIGHT)
 ; ✓ Variables (MAKE, :varname)
 ; ✓ Arithmetic operators (+, -, *, /, MOD)

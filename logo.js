@@ -1054,6 +1054,20 @@ class LogoInterpreter {
         for (let i = 0; i < code.length; i++) {
             const char = code[i];
 
+            // Handle semicolon comments - skip to end of line
+            if (char === ';') {
+                // Save any current token before the comment
+                if (current.trim()) {
+                    tokens.push(current.trim());
+                    current = '';
+                }
+                // Skip everything until newline
+                while (i < code.length && code[i] !== '\n') {
+                    i++;
+                }
+                continue;
+            }
+
             if (char === '[') {
                 if (current.trim()) {
                     tokens.push(current.trim());
