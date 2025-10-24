@@ -1763,11 +1763,11 @@ REPEAT 8 [
 ; 4. Trigonometry - Parametric curve
 PENUP
 HOME
-SETXY -100 0
+SETXY 100 0
 PENDOWN
 SETPENCOLOR 128 0 255
 PENSIZE 2
-MAKE "angle 0
+MAKE "angle 10
 REPEAT 36 [
   SETXY 100 * COS :angle 100 * SIN :angle
   MAKE "angle :angle + 10
