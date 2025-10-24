@@ -69,6 +69,10 @@ public class Interpreter
                 ExecuteFor(forNode);
                 break;
 
+            case DoTimesNode doTimesNode:
+                ExecuteDoTimes(doTimesNode);
+                break;
+
             case LocalNode localNode:
                 ExecuteLocal(localNode);
                 break;
@@ -187,8 +191,9 @@ public class Interpreter
             // Logical operators
             "and" => (left != 0 && right != 0) ? 1 : 0,
             "or" => (left != 0 || right != 0) ? 1 : 0,
-            // Power operator
+            // Power operators
             "power" => Math.Pow(left, right),
+            "^" => Math.Pow(left, right),
             _ => throw new InvalidOperationException($"Unknown operator: {node.Operator}")
         };
 
@@ -608,6 +613,7 @@ public class Interpreter
             "heading" => turtle.Heading,
             "pendown?" or "pendownp" => turtle.PenDown ? 1 : 0,
             "pensize" => turtle.PenSize,
+            "repcount" => _context.GetRepeatCount(),
             _ => throw new InvalidOperationException($"Unknown query function: {node.QueryName}")
         };
 
@@ -677,6 +683,16 @@ public class Interpreter
 
             case "setpencolor":
             case "setpc":
+                // SETPENCOLOR takes 1 arg (palette index 0-15)
+                if (command.Arguments.Count > 0)
+                {
+                    var index = (int)Math.Floor(EvaluateExpression(command.Arguments[0]).AsNumber());
+                    turtle.SetPenColorFromPalette(index);
+                }
+                break;
+
+            case "setpenrgb":
+                // SETPENRGB takes 3 args (r g b, 0-255 each)
                 if (command.Arguments.Count >= 3)
                 {
                     var r = EvaluateExpression(command.Arguments[0]).AsNumber();
@@ -755,9 +771,18 @@ public class Interpreter
 
         for (int i = 0; i < count; i++)
         {
-            foreach (var statement in repeat.Body)
+            // Push current iteration (1-indexed) for REPCOUNT
+            _context.PushRepeatCount(i + 1);
+            try
             {
-                Execute(statement);
+                foreach (var statement in repeat.Body)
+                {
+                    Execute(statement);
+                }
+            }
+            finally
+            {
+                _context.PopRepeatCount();
             }
         }
     }
@@ -972,6 +997,22 @@ public class Interpreter
                 {
                     Execute(statement);
                 }
+            }
+        }
+    }
+
+    private void ExecuteDoTimes(DoTimesNode doTimesNode)
+    {
+        var count = EvaluateExpression(doTimesNode.Count).AsNumber();
+
+        // Execute the DOTIMES loop (1 to count)
+        for (double i = 1; i <= Math.Floor(count); i++)
+        {
+            _context.SetVariable(doTimesNode.Variable, new NumberValue(i));
+
+            foreach (var statement in doTimesNode.Body)
+            {
+                Execute(statement);
             }
         }
     }

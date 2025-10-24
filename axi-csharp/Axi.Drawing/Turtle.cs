@@ -5,6 +5,27 @@ namespace Axi.Drawing;
 /// </summary>
 public class Turtle
 {
+    // Standard Logo color palette (16 colors)
+    private static readonly (double R, double G, double B)[] ColorPalette = new[]
+    {
+        (0.0, 0.0, 0.0),       // 0: black
+        (0.0, 0.0, 255.0),     // 1: blue
+        (0.0, 255.0, 0.0),     // 2: green
+        (0.0, 255.0, 255.0),   // 3: cyan
+        (255.0, 0.0, 0.0),     // 4: red
+        (255.0, 0.0, 255.0),   // 5: magenta
+        (255.0, 255.0, 0.0),   // 6: yellow
+        (255.0, 255.0, 255.0), // 7: white
+        (165.0, 42.0, 42.0),   // 8: brown
+        (210.0, 180.0, 140.0), // 9: tan
+        (0.0, 128.0, 0.0),     // 10: dark green
+        (127.0, 255.0, 212.0), // 11: aquamarine
+        (250.0, 128.0, 114.0), // 12: salmon
+        (128.0, 0.0, 128.0),   // 13: purple
+        (255.0, 165.0, 0.0),   // 14: orange
+        (128.0, 128.0, 128.0)  // 15: gray
+    };
+
     private Point _position;
     private double _heading; // in degrees, 0 = right, 90 = up
     private bool _penDown;
@@ -229,6 +250,15 @@ public class Turtle
     public void SetPenSize(double size)
     {
         _penSize = size;
+    }
+
+    /// <summary>
+    /// Sets the pen color using an indexed palette (0-15)
+    /// </summary>
+    public void SetPenColorFromPalette(int index)
+    {
+        var paletteIndex = Math.Abs(index) % ColorPalette.Length;
+        _penColor = ColorPalette[paletteIndex];
     }
 
     /// <summary>
