@@ -102,6 +102,23 @@ header p {
     cursor: not-allowed;
 }
 
+.btn-small {
+    padding: 5px 10px;
+    font-size: 12px;
+    background: #e2e8f0;
+    color: #334155;
+}
+
+.btn-small:hover {
+    background: #cbd5e1;
+}
+
+.zoom-controls {
+    display: flex;
+    gap: 5px;
+    margin-left: auto;
+}
+
 .editor-container {
     margin-bottom: 15px;
 }

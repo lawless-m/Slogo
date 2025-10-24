@@ -33,6 +33,10 @@ class LogoInterpreter {
         this.stopRequested = false; // Flag to stop execution
         this.repeatCountStack = []; // Stack to track REPCOUNT in nested REPEAT loops
         this.speed = 50; // Animation speed (1-100, higher = faster)
+        this.zoom = 1.0; // Zoom level (1.0 = 100%)
+        this.panX = 0; // Pan offset X
+        this.panY = 0; // Pan offset Y
+        this.boundingBox = { minX: 0, maxX: 0, minY: 0, maxY: 0 }; // Track drawing bounds
 
         // Standard Logo color palette (16 colors)
         this.colorPalette = [
@@ -111,6 +115,57 @@ class LogoInterpreter {
 
     clear() {
         this.drawingLayer.innerHTML = '';
+        this.boundingBox = { minX: 0, maxX: 0, minY: 0, maxY: 0 };
+    }
+
+    updateBoundingBox(x, y) {
+        this.boundingBox.minX = Math.min(this.boundingBox.minX, x);
+        this.boundingBox.maxX = Math.max(this.boundingBox.maxX, x);
+        this.boundingBox.minY = Math.min(this.boundingBox.minY, y);
+        this.boundingBox.maxY = Math.max(this.boundingBox.maxY, y);
+    }
+
+    setZoom(zoom, panX = this.panX, panY = this.panY) {
+        this.zoom = Math.max(0.1, Math.min(10, zoom)); // Clamp between 0.1x and 10x
+        this.panX = panX;
+        this.panY = panY;
+        this.applyZoomAndPan();
+    }
+
+    applyZoomAndPan() {
+        const svg = this.canvas;
+        const viewBox = `${-this.panX} ${-this.panY} ${600 / this.zoom} ${600 / this.zoom}`;
+        svg.setAttribute('viewBox', viewBox);
+    }
+
+    zoomToFit() {
+        const bbox = this.boundingBox;
+        const width = bbox.maxX - bbox.minX;
+        const height = bbox.maxY - bbox.minY;
+
+        if (width === 0 && height === 0) {
+            // No drawing, reset to default
+            this.setZoom(1.0, 0, 0);
+            return;
+        }
+
+        // Add 10% padding
+        const padding = 1.1;
+        const drawingWidth = width * padding;
+        const drawingHeight = height * padding;
+
+        // Calculate zoom to fit both dimensions
+        const zoomX = 600 / drawingWidth;
+        const zoomY = 600 / drawingHeight;
+        const newZoom = Math.min(zoomX, zoomY);
+
+        // Center the drawing
+        const centerX = (bbox.minX + bbox.maxX) / 2;
+        const centerY = (bbox.minY + bbox.maxY) / 2;
+        const panX = centerX - 300 / newZoom;
+        const panY = centerY - 300 / newZoom;
+
+        this.setZoom(newZoom, panX, panY);
     }
 
     updateTurtleDisplay() {
@@ -1088,6 +1143,10 @@ class LogoInterpreter {
         line.setAttribute('stroke-width', this.penSize);
         line.setAttribute('stroke-linecap', 'round');
         this.drawingLayer.appendChild(line);
+
+        // Update bounding box for zoom-to-fit
+        this.updateBoundingBox(x1, y1);
+        this.updateBoundingBox(x2, y2);
     }
 
     log(message) {
@@ -1966,5 +2025,27 @@ SQUARE :base + SQRT 100   ; sqrt(100) = 10, so 40x40 square
             codeEditor.value = codeEditor.value.substring(0, start) + '  ' + codeEditor.value.substring(end);
             codeEditor.selectionStart = codeEditor.selectionEnd = start + 2;
         }
+    });
+
+    // Zoom controls
+    const zoomInButton = document.getElementById('zoomInButton');
+    const zoomOutButton = document.getElementById('zoomOutButton');
+    const zoomFitButton = document.getElementById('zoomFitButton');
+    const zoomResetButton = document.getElementById('zoomResetButton');
+
+    zoomInButton.addEventListener('click', () => {
+        interpreter.setZoom(interpreter.zoom * 1.2);
+    });
+
+    zoomOutButton.addEventListener('click', () => {
+        interpreter.setZoom(interpreter.zoom / 1.2);
+    });
+
+    zoomFitButton.addEventListener('click', () => {
+        interpreter.zoomToFit();
+    });
+
+    zoomResetButton.addEventListener('click', () => {
+        interpreter.setZoom(1.0, 0, 0);
     });
 });

@@ -50,6 +50,12 @@ REPEAT 4 [
                         Speed: <input type="range" id="speed" min="1" max="100" value="50">
                         <span id="speedValue">50</span>
                     </label>
+                    <div class="zoom-controls">
+                        <button id="zoomInButton" class="btn btn-small">+</button>
+                        <button id="zoomOutButton" class="btn btn-small">-</button>
+                        <button id="zoomFitButton" class="btn btn-small">Fit</button>
+                        <button id="zoomResetButton" class="btn btn-small">100%</button>
+                    </div>
                 </div>
                 <div class="canvas-container">
                     <svg id="canvas" width="600" height="600">
@@ -208,6 +214,6 @@ REPEAT 4 [
         </div>
     </div>
 
-    <script src="logo.js?v=20251024-12"></script>
+    <script src="logo.js?v=20251024-13"></script>
 </body>
 </html>
