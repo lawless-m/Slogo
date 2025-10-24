@@ -29,6 +29,7 @@ class LogoInterpreter {
         this.procedures = {};
         this.sourceCode = ''; // Store original source for error reporting
         this.tokens = []; // Store tokens for error reporting
+        this.tokenMeta = []; // Store metadata (line, column) for each token
     }
 
     reset() {
@@ -1056,10 +1057,11 @@ class LogoInterpreter {
     formatError(error, tokenIndex) {
         let msg = `Error: ${error.message}\n`;
 
-        if (tokenIndex !== undefined && this.tokens && this.tokens.length > 0) {
-            // Show the problematic token
+        if (tokenIndex !== undefined && this.tokens && this.tokens.length > 0 && this.tokenMeta && this.tokenMeta.length > 0) {
+            // Show the problematic token with line number
             const token = this.tokens[tokenIndex] || '';
-            msg += `At token ${tokenIndex}: "${token}"\n`;
+            const meta = this.tokenMeta[tokenIndex] || { line: '?', column: '?' };
+            msg += `At line ${meta.line}, column ${meta.column}: "${token}"\n`;
 
             // Show context (5 tokens before and after)
             const start = Math.max(0, tokenIndex - 5);
@@ -1083,65 +1085,102 @@ class LogoInterpreter {
 
     tokenize(code) {
         let tokens = [];
+        let tokenMeta = []; // Store metadata (line, column) for each token
         let current = '';
         let inBracket = false;
+        let line = 1;
+        let column = 1;
+        let tokenStartLine = 1;
+        let tokenStartColumn = 1;
 
         for (let i = 0; i < code.length; i++) {
             const char = code[i];
+
+            // Track line and column
+            if (char === '\n') {
+                line++;
+                column = 1;
+            } else {
+                column++;
+            }
 
             // Handle semicolon comments - skip to end of line
             if (char === ';') {
                 // Save any current token before the comment
                 if (current.trim()) {
                     tokens.push(current.trim());
+                    tokenMeta.push({ line: tokenStartLine, column: tokenStartColumn });
                     current = '';
                 }
                 // Skip everything until newline
                 while (i < code.length && code[i] !== '\n') {
                     i++;
+                    column++;
                 }
                 continue;
+            }
+
+            // Start tracking token position when we begin a new token
+            if (current === '' && char !== ' ' && char !== '\t' && char !== '\n' && char !== '\r') {
+                tokenStartLine = line;
+                tokenStartColumn = column;
             }
 
             if (char === '[') {
                 if (current.trim()) {
                     tokens.push(current.trim());
+                    tokenMeta.push({ line: tokenStartLine, column: tokenStartColumn });
                     current = '';
                 }
+                tokenStartLine = line;
+                tokenStartColumn = column;
                 tokens.push('[');
+                tokenMeta.push({ line: tokenStartLine, column: tokenStartColumn });
                 inBracket = true;
             } else if (char === ']') {
                 if (current.trim()) {
                     tokens.push(current.trim());
+                    tokenMeta.push({ line: tokenStartLine, column: tokenStartColumn });
                     current = '';
                 }
+                tokenStartLine = line;
+                tokenStartColumn = column;
                 tokens.push(']');
+                tokenMeta.push({ line: tokenStartLine, column: tokenStartColumn });
                 inBracket = false;
             } else if (char === '<' || char === '>' || char === '=') {
                 // Handle comparison operators
                 if (current.trim()) {
                     tokens.push(current.trim());
+                    tokenMeta.push({ line: tokenStartLine, column: tokenStartColumn });
                     current = '';
                 }
+                tokenStartLine = line;
+                tokenStartColumn = column;
                 // Check for two-character operators: <=, >=, <>
                 if (i + 1 < code.length) {
                     const nextChar = code[i + 1];
                     if ((char === '<' && (nextChar === '=' || nextChar === '>')) ||
                         (char === '>' && nextChar === '=')) {
                         tokens.push(char + nextChar);
+                        tokenMeta.push({ line: tokenStartLine, column: tokenStartColumn });
                         i++; // Skip next character
+                        column++; // Update column for skipped character
                         continue;
                     }
                 }
                 tokens.push(char);
+                tokenMeta.push({ line: tokenStartLine, column: tokenStartColumn });
             } else if (/\s/.test(char) && !inBracket) {
                 if (current.trim()) {
                     tokens.push(current.trim());
+                    tokenMeta.push({ line: tokenStartLine, column: tokenStartColumn });
                     current = '';
                 }
             } else if (char === '\n') {
                 if (current.trim()) {
                     tokens.push(current.trim());
+                    tokenMeta.push({ line: tokenStartLine, column: tokenStartColumn });
                     current = '';
                 }
             } else {
@@ -1151,8 +1190,11 @@ class LogoInterpreter {
 
         if (current.trim()) {
             tokens.push(current.trim());
+            tokenMeta.push({ line: tokenStartLine, column: tokenStartColumn });
         }
 
+        // Store metadata for error reporting
+        this.tokenMeta = tokenMeta;
         return tokens;
     }
 
@@ -1180,7 +1222,11 @@ class LogoInterpreter {
             i++;
         }
 
-        throw new Error('Unmatched bracket');
+        // Better error message for unmatched brackets
+        const contextStart = Math.max(0, index - 3);
+        const contextEnd = Math.min(tokens.length, i + 3);
+        const context = tokens.slice(contextStart, contextEnd).join(' ');
+        throw new Error(`Unmatched bracket - missing closing ']'. Context: ${context}`);
     }
 
     async execute(tokens, startIndex = 0, endIndex = null) {
