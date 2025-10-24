@@ -111,6 +111,10 @@ public class Tokenizer
                 _position++;
                 return new Token(TokenType.Divide, "/", startPos);
 
+            case '^':
+                _position++;
+                return new Token(TokenType.Caret, "^", startPos);
+
             case '<':
                 _position++;
                 // Check for <= or <>

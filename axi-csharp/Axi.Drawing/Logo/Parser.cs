@@ -118,6 +118,12 @@ public class Parser
             return ParseFor();
         }
 
+        // DOTIMES loop: dotimes [variable count] [ ... ]
+        if (Check(TokenType.Word) && Current.Value.ToLower() == "dotimes")
+        {
+            return ParseDoTimes();
+        }
+
         // LOCAL variable declaration: local "var or local [var1 var2 ...]
         if (Check(TokenType.Word) && Current.Value.ToLower() == "local")
         {
@@ -315,6 +321,42 @@ public class Parser
         return new ForNode(variable, start, end, increment, body);
     }
 
+    private AstNode ParseDoTimes()
+    {
+        Consume(); // consume 'dotimes'
+
+        // Parse control list: [variable count]
+        Consume(TokenType.LeftBracket);
+
+        // Get variable name
+        string variable;
+        if (Check(TokenType.Colon))
+        {
+            Consume(); // consume ':'
+            variable = Consume(TokenType.Word).Value;
+        }
+        else if (Check(TokenType.Word))
+        {
+            variable = Consume(TokenType.Word).Value;
+        }
+        else
+        {
+            throw new Exception("DOTIMES loop requires a variable name");
+        }
+
+        // Parse count value
+        var count = ParseExpression();
+
+        Consume(TokenType.RightBracket);
+
+        // Parse body
+        Consume(TokenType.LeftBracket);
+        var body = ParseBlock();
+        Consume(TokenType.RightBracket);
+
+        return new DoTimesNode(variable, count, body);
+    }
+
     private AstNode ParseLocal()
     {
         Consume(); // consume 'local'
@@ -503,10 +545,25 @@ public class Parser
     // Multiplication, division, and modulo (higher precedence)
     private AstNode ParseMulDiv()
     {
-        var left = ParseUnary();
+        var left = ParseExponentiation();
 
         while (Check(TokenType.Multiply) || Check(TokenType.Divide) ||
                (Check(TokenType.Word) && Current.Value.Equals("mod", StringComparison.OrdinalIgnoreCase)))
+        {
+            var op = Consume();
+            var right = ParseExponentiation();
+            left = new BinaryOpNode(op.Value, left, right);
+        }
+
+        return left;
+    }
+
+    // Exponentiation (higher precedence than multiplication)
+    private AstNode ParseExponentiation()
+    {
+        var left = ParseUnary();
+
+        while (Check(TokenType.Caret))
         {
             var op = Consume();
             var right = ParseUnary();
@@ -583,7 +640,7 @@ public class Parser
             }
 
             // Check if it's a query function (no arguments)
-            if (word is "xcor" or "ycor" or "heading" or "pendown?" or "pendownp" or "pensize" or "pencolor")
+            if (word is "xcor" or "ycor" or "heading" or "pendown?" or "pendownp" or "pensize" or "pencolor" or "repcount")
             {
                 Consume(); // query function name
                 return new QueryNode(word);
@@ -652,7 +709,8 @@ public class Parser
             "penup" or "pu" => 0,
             "pendown" or "pd" => 0,
             "setpensize" or "pensize" => 1,
-            "setpencolor" or "setpc" => 3,
+            "setpencolor" or "setpc" => 1,  // Takes 1 arg (palette index)
+            "setpenrgb" => 3,                // Takes 3 args (r g b)
             "home" => 0,
             "clear" => 0,
             _ => 0 // Unknown commands might be procedure calls

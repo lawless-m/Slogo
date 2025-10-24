@@ -15,6 +15,7 @@ public enum TokenType
     Minus,          // -
     Multiply,       // *
     Divide,         // /
+    Caret,          // ^ (exponentiation)
     LeftParen,      // (
     RightParen,     // )
     LessThan,       // <
