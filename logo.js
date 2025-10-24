@@ -33,6 +33,26 @@ class LogoInterpreter {
         this.stopRequested = false; // Flag to stop execution
         this.repeatCountStack = []; // Stack to track REPCOUNT in nested REPEAT loops
         this.speed = 50; // Animation speed (1-100, higher = faster)
+
+        // Standard Logo color palette (16 colors)
+        this.colorPalette = [
+            [0, 0, 0],       // 0: black
+            [0, 0, 255],     // 1: blue
+            [0, 255, 0],     // 2: green
+            [0, 255, 255],   // 3: cyan
+            [255, 0, 0],     // 4: red
+            [255, 0, 255],   // 5: magenta
+            [255, 255, 0],   // 6: yellow
+            [255, 255, 255], // 7: white
+            [165, 42, 42],   // 8: brown
+            [210, 180, 140], // 9: tan
+            [0, 128, 0],     // 10: dark green
+            [127, 255, 212], // 11: aquamarine
+            [250, 128, 114], // 12: salmon
+            [128, 0, 128],   // 13: purple
+            [255, 165, 0],   // 14: orange
+            [128, 128, 128]  // 15: gray
+        ];
     }
 
     reset() {
@@ -160,7 +180,7 @@ class LogoInterpreter {
 
         const keywords = ['FORWARD', 'FD', 'BACKWARD', 'BK', 'BACK', 'LEFT', 'LT', 'RIGHT', 'RT',
                          'SETXY', 'SETX', 'SETY', 'SETHEADING', 'SETH', 'HOME', 'PENUP', 'PU',
-                         'PENDOWN', 'PD', 'PENSIZE', 'SETPENSIZE', 'SETPENCOLOR', 'SETPC',
+                         'PENDOWN', 'PD', 'PENSIZE', 'SETPENSIZE', 'SETPENCOLOR', 'SETPC', 'SETPENRGB',
                          'CIRCLE', 'BOX', 'SQUARE', 'MAKE', 'CLEAR', 'CLEARSCREEN', 'CS',
                          'HIDETURTLE', 'HT', 'SHOWTURTLE', 'ST', 'REPEAT', 'TO', 'END'];
 
@@ -1358,6 +1378,18 @@ class LogoInterpreter {
                     case 'SETPENCOLOR':
                     case 'SETPC':
                         {
+                            // SETPENCOLOR takes 1 arg (palette index 0-15)
+                            const { value, nextIndex } = this.getNextValue(tokens, i + 1);
+                            const index = Math.floor(value) % this.colorPalette.length;
+                            const [r, g, b] = this.colorPalette[index];
+                            this.setPenColor(r, g, b);
+                            i = nextIndex - 1;
+                        }
+                        break;
+
+                    case 'SETPENRGB':
+                        {
+                            // SETPENRGB takes 3 args (r g b, 0-255 each)
                             const r = this.getNextValue(tokens, i + 1);
                             const g = this.getNextValue(tokens, r.nextIndex);
                             const b = this.getNextValue(tokens, g.nextIndex);
