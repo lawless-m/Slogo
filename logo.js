@@ -31,6 +31,7 @@ class LogoInterpreter {
         this.tokens = []; // Store tokens for error reporting
         this.tokenMeta = []; // Store metadata (line, column) for each token
         this.stopRequested = false; // Flag to stop execution
+        this.repeatCountStack = []; // Stack to track REPCOUNT in nested REPEAT loops
     }
 
     reset() {
@@ -471,7 +472,7 @@ class LogoInterpreter {
         }
 
         // Query functions (no arguments)
-        if (['XCOR', 'YCOR', 'HEADING', 'PENDOWN?', 'PENDOWNP', 'PENSIZE', 'PENCOLOR'].includes(func)) {
+        if (['XCOR', 'YCOR', 'HEADING', 'PENDOWN?', 'PENDOWNP', 'PENSIZE', 'PENCOLOR', 'REPCOUNT'].includes(func)) {
             let result;
             switch (func) {
                 case 'XCOR':
@@ -492,6 +493,12 @@ class LogoInterpreter {
                     break;
                 case 'PENCOLOR':
                     result = this.penColorRGB.slice(); // Return a copy of the RGB array
+                    break;
+                case 'REPCOUNT':
+                    if (this.repeatCountStack.length === 0) {
+                        throw new Error('REPCOUNT can only be used inside a REPEAT loop');
+                    }
+                    result = this.repeatCountStack[this.repeatCountStack.length - 1];
                     break;
             }
             return { value: result, nextIndex: index + 1 };
@@ -1447,7 +1454,10 @@ class LogoInterpreter {
                             }
                             const { block, nextIndex } = this.parseBlock(tokens, afterExpr + 1);
                             for (let j = 0; j < Math.floor(count); j++) {
+                                // Push current iteration (1-indexed) for REPCOUNT
+                                this.repeatCountStack.push(j + 1);
                                 await this.execute(block);
+                                this.repeatCountStack.pop();
                                 await this.sleep(10);
                             }
                             i = nextIndex - 1;
