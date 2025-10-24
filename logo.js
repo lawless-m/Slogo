@@ -97,8 +97,10 @@ class LogoInterpreter {
         const screenX = this.centerX + this.x;
         const screenY = this.centerY - this.y;
 
-        // Turtle heading: 0=right, 90=up, convert to SVG rotation (subtract 90 to make turtle point in right direction)
-        const rotation = this.heading - 90;
+        // Turtle heading: 0=right, 90=up, convert to SVG rotation
+        // SVG rotation is clockwise: 0=up, 90=right, 180=down, 270=left
+        // Logo heading: 0=right, 90=up, 180=left, 270=down
+        const rotation = 90 - this.heading;
 
         this.turtleElement.setAttribute('transform',
             `translate(${screenX}, ${screenY}) rotate(${rotation})`);
