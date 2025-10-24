@@ -30,6 +30,7 @@ class LogoInterpreter {
         this.sourceCode = ''; // Store original source for error reporting
         this.tokens = []; // Store tokens for error reporting
         this.tokenMeta = []; // Store metadata (line, column) for each token
+        this.stopRequested = false; // Flag to stop execution
     }
 
     reset() {
@@ -1240,6 +1241,12 @@ class LogoInterpreter {
         let i = startIndex;
 
         while (i < end) {
+            // Check if stop was requested
+            if (this.stopRequested) {
+                this.log('Execution stopped by user');
+                return;
+            }
+
             const token = tokens[i].toUpperCase();
 
             try {
@@ -1688,11 +1695,14 @@ class LogoInterpreter {
     async run(code) {
         this.output.textContent = '';
         this.sourceCode = code; // Store for error reporting
+        this.stopRequested = false; // Reset stop flag
 
         try {
             this.tokens = this.tokenize(code); // Store for error reporting
             await this.execute(this.tokens);
-            this.log('Program completed successfully!');
+            if (!this.stopRequested) {
+                this.log('Program completed successfully!');
+            }
         } catch (error) {
             // Don't log the error here - it's already logged in execute()
             // Just let it bubble up
@@ -1700,6 +1710,10 @@ class LogoInterpreter {
                 this.log(`Error: ${error.message}`);
             }
         }
+    }
+
+    stop() {
+        this.stopRequested = true;
     }
 }
 
@@ -1709,6 +1723,7 @@ document.addEventListener('DOMContentLoaded', () => {
     interpreter = new LogoInterpreter();
 
     const runButton = document.getElementById('runButton');
+    const stopButton = document.getElementById('stopButton');
     const clearButton = document.getElementById('clearButton');
     const resetButton = document.getElementById('resetButton');
     const exampleButton = document.getElementById('exampleButton');
@@ -1720,7 +1735,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     runButton.addEventListener('click', () => {
         const code = codeEditor.value;
-        interpreter.run(code);
+        runButton.disabled = true;
+        stopButton.disabled = false;
+        interpreter.run(code).finally(() => {
+            runButton.disabled = false;
+            stopButton.disabled = true;
+        });
+    });
+
+    stopButton.addEventListener('click', () => {
+        interpreter.stop();
+        stopButton.disabled = true;
     });
 
     clearButton.addEventListener('click', () => {
