@@ -32,6 +32,7 @@ class LogoInterpreter {
         this.tokenMeta = []; // Store metadata (line, column) for each token
         this.stopRequested = false; // Flag to stop execution
         this.repeatCountStack = []; // Stack to track REPCOUNT in nested REPEAT loops
+        this.speed = 50; // Animation speed (1-100, higher = faster)
     }
 
     reset() {
@@ -1458,7 +1459,7 @@ class LogoInterpreter {
                                 this.repeatCountStack.push(j + 1);
                                 await this.execute(block);
                                 this.repeatCountStack.pop();
-                                await this.sleep(10);
+                                await this.sleep(this.getDelay());
                             }
                             i = nextIndex - 1;
                         }
@@ -1487,7 +1488,7 @@ class LogoInterpreter {
                                 const { value: condition } = this.getNextValue(condTokens, 0);
                                 if (!condition) break;
                                 await this.execute(block);
-                                await this.sleep(10);
+                                await this.sleep(this.getDelay());
                             }
 
                             i = nextIndex - 1;
@@ -1527,13 +1528,13 @@ class LogoInterpreter {
                                 for (let loopVar = start; loopVar <= end; loopVar += increment) {
                                     this.setVariable(varName, loopVar);
                                     await this.execute(commandBlock);
-                                    await this.sleep(10);
+                                    await this.sleep(this.getDelay());
                                 }
                             } else if (increment < 0) {
                                 for (let loopVar = start; loopVar >= end; loopVar += increment) {
                                     this.setVariable(varName, loopVar);
                                     await this.execute(commandBlock);
-                                    await this.sleep(10);
+                                    await this.sleep(this.getDelay());
                                 }
                             } else {
                                 throw new Error('FOR loop increment cannot be zero');
@@ -1698,6 +1699,12 @@ class LogoInterpreter {
         }
     }
 
+    getDelay() {
+        // Convert speed (1-100) to delay in ms
+        // Speed 100 = 1ms, Speed 50 = 11ms, Speed 1 = 101ms
+        return 101 - this.speed;
+    }
+
     sleep(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
@@ -1858,7 +1865,9 @@ SQUARE :base + SQRT 100   ; sqrt(100) = 10, so 40x40 square
     });
 
     speedInput.addEventListener('input', (e) => {
-        speedValue.textContent = e.target.value;
+        const speed = parseInt(e.target.value);
+        speedValue.textContent = speed;
+        interpreter.speed = speed;
     });
 
     codeEditor.addEventListener('keydown', (e) => {
