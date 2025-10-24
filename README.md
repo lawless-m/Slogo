@@ -698,27 +698,15 @@ This JavaScript implementation is designed to be compatible with the C# Avalonia
 
 Potential features for future versions:
 
-- [x] Conditional statements (IF/IFELSE) ✅
-- [x] Mathematical expressions (arithmetic operations) ✅
-- [x] Boolean operators ✅
-- [x] WHILE loops ✅
-- [x] Query functions (XCOR, YCOR, HEADING, PENDOWN?, PENSIZE, PENCOLOR) ✅
-- [x] POWER/POW function ✅
-- [x] PRINT command ✅
-- [x] STOP command ✅
-- [x] FOR loops ✅
-- [x] LOCAL variables ✅
-- [x] List operations (literals, manipulation, search) ✅
-- [x] Higher-order functions (MAP, FILTER, REDUCE, APPLY) ✅
-- [ ] Fill operations
-- [ ] Animation speed control
-- [ ] Export drawings as SVG/PNG
-- [ ] Code syntax highlighting
-- [ ] Error line highlighting
-- [ ] Undo/Redo functionality
-- [ ] Save/Load programs
-- [ ] More shape primitives (ARC, TEXT/LABEL)
-- [ ] String operations
+- Fill operations
+- Animation speed control
+- Export drawings as SVG/PNG
+- Code syntax highlighting
+- Error line highlighting
+- Undo/Redo functionality
+- Save/Load programs
+- More shape primitives (ARC, TEXT/LABEL)
+- String operations
 
 ## Contributing
 
