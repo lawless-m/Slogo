@@ -27,6 +27,8 @@ class LogoInterpreter {
 
         this.reset();
         this.procedures = {};
+        this.sourceCode = ''; // Store original source for error reporting
+        this.tokens = []; // Store tokens for error reporting
     }
 
     reset() {
@@ -185,7 +187,9 @@ class LogoInterpreter {
     getNextValue(tokens, index) {
         const { tokens: exprTokens, nextIndex } = this.collectExpressionTokens(tokens, index);
         if (exprTokens.length === 0) {
-            throw new Error('Expected expression');
+            const prevToken = index > 0 ? tokens[index - 1] : 'start';
+            const nextToken = index < tokens.length ? tokens[index] : 'end of program';
+            throw new Error(`Expected expression after "${prevToken}", got "${nextToken}"`);
         }
         const result = this.parseExpression(exprTokens, 0);
         return { value: result.value, nextIndex };
@@ -1046,6 +1050,35 @@ class LogoInterpreter {
         return value;
     }
 
+    // Format error message with context
+    formatError(error, tokenIndex) {
+        let msg = `Error: ${error.message}\n`;
+
+        if (tokenIndex !== undefined && this.tokens && this.tokens.length > 0) {
+            // Show the problematic token
+            const token = this.tokens[tokenIndex] || '';
+            msg += `At token ${tokenIndex}: "${token}"\n`;
+
+            // Show context (5 tokens before and after)
+            const start = Math.max(0, tokenIndex - 5);
+            const end = Math.min(this.tokens.length, tokenIndex + 6);
+            const contextTokens = this.tokens.slice(start, end);
+
+            // Build context string with pointer to error
+            const contextStr = contextTokens.map((t, i) => {
+                const actualIndex = start + i;
+                if (actualIndex === tokenIndex) {
+                    return `>>> ${t} <<<`;
+                }
+                return t;
+            }).join(' ');
+
+            msg += `Context: ${contextStr}`;
+        }
+
+        return msg;
+    }
+
     tokenize(code) {
         let tokens = [];
         let current = '';
@@ -1583,7 +1616,10 @@ class LogoInterpreter {
                         }
                 }
             } catch (error) {
-                this.log(`Error at token ${i}: ${error.message}`);
+                // Format and log the error with context
+                const errorMsg = this.formatError(error, i);
+                this.log(errorMsg);
+                error.logged = true; // Mark as logged to avoid duplicate messages
                 throw error;
             }
 
@@ -1597,13 +1633,18 @@ class LogoInterpreter {
 
     async run(code) {
         this.output.textContent = '';
+        this.sourceCode = code; // Store for error reporting
 
         try {
-            const tokens = this.tokenize(code);
-            await this.execute(tokens);
+            this.tokens = this.tokenize(code); // Store for error reporting
+            await this.execute(this.tokens);
             this.log('Program completed successfully!');
         } catch (error) {
-            this.log(`Error: ${error.message}`);
+            // Don't log the error here - it's already logged in execute()
+            // Just let it bubble up
+            if (!error.logged) {
+                this.log(`Error: ${error.message}`);
+            }
         }
     }
 }
