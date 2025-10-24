@@ -1512,9 +1512,13 @@ class LogoInterpreter {
                             const { block: commandBlock, nextIndex: afterCommands } = this.parseBlock(tokens, afterControl + 1);
 
                             // Execute the FOR loop
+                            console.log('FOR DEBUG: About to start loop, varName =', varName, 'start =', start, 'end =', end, 'increment =', increment);
+                            console.log('FOR DEBUG: commandBlock =', commandBlock);
                             if (increment > 0) {
                                 for (let loopVar = start; loopVar <= end; loopVar += increment) {
+                                    console.log('FOR DEBUG: Setting variable', varName, '=', loopVar);
                                     this.setVariable(varName, loopVar);
+                                    console.log('FOR DEBUG: Variable set, about to execute commandBlock');
                                     await this.execute(commandBlock);
                                     await this.sleep(10);
                                 }
