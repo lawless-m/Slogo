@@ -702,10 +702,14 @@ Potential features for future versions:
 - [x] Mathematical expressions (arithmetic operations) ✅
 - [x] Boolean operators ✅
 - [x] WHILE loops ✅
-- [x] Query functions (XCOR, YCOR, HEADING, PENDOWN?, PENSIZE) ✅
+- [x] Query functions (XCOR, YCOR, HEADING, PENDOWN?, PENSIZE, PENCOLOR) ✅
 - [x] POWER/POW function ✅
 - [x] PRINT command ✅
 - [x] STOP command ✅
+- [x] FOR loops ✅
+- [x] LOCAL variables ✅
+- [x] List operations (literals, manipulation, search) ✅
+- [x] Higher-order functions (MAP, FILTER, REDUCE, APPLY) ✅
 - [ ] Fill operations
 - [ ] Animation speed control
 - [ ] Export drawings as SVG/PNG
@@ -714,7 +718,6 @@ Potential features for future versions:
 - [ ] Undo/Redo functionality
 - [ ] Save/Load programs
 - [ ] More shape primitives (ARC, TEXT/LABEL)
-- [ ] List operations
 - [ ] String operations
 
 ## Contributing
