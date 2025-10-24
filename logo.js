@@ -1493,10 +1493,10 @@ class LogoInterpreter {
                             }
 
                             const varName = controlList[0].replace(':', '').replace('"', '');
-                            const { value: start } = this.getNextValue(controlList, 1);
-                            const { value: end } = this.getNextValue(controlList, 2);
+                            const start = this.evaluateExpression(controlList[1]);
+                            const end = this.evaluateExpression(controlList[2]);
                             const increment = controlList.length === 4
-                                ? this.getNextValue(controlList, 3).value
+                                ? this.evaluateExpression(controlList[3])
                                 : (start <= end ? 1 : -1);
 
                             if (tokens[afterControl] !== '[') {
