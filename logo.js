@@ -38,6 +38,9 @@ class LogoInterpreter {
         this.panY = 0; // Pan offset Y
         this.boundingBox = { minX: 0, maxX: 0, minY: 0, maxY: 0 }; // Track drawing bounds
 
+        // Initialize viewBox to show entire canvas
+        this.applyZoomAndPan();
+
         // Standard Logo color palette (16 colors)
         this.colorPalette = [
             [0, 0, 0],       // 0: black
@@ -134,14 +137,24 @@ class LogoInterpreter {
 
     applyZoomAndPan() {
         const svg = this.canvas;
-        const viewBox = `${-this.panX} ${-this.panY} ${600 / this.zoom} ${600 / this.zoom}`;
+        const viewBox = `${this.panX} ${this.panY} ${600 / this.zoom} ${600 / this.zoom}`;
         svg.setAttribute('viewBox', viewBox);
     }
 
     zoomToFit() {
         const bbox = this.boundingBox;
-        const width = bbox.maxX - bbox.minX;
-        const height = bbox.maxY - bbox.minY;
+
+        // Convert Logo coordinates to screen coordinates
+        // Logo: (0,0) is center, +x right, +y up
+        // Screen: (0,0) is top-left, +x right, +y down
+        // Logo (x,y) → Screen (300+x, 300-y)
+        const screenMinX = this.centerX + bbox.minX;
+        const screenMaxX = this.centerX + bbox.maxX;
+        const screenMinY = this.centerY - bbox.maxY;  // Y is inverted
+        const screenMaxY = this.centerY - bbox.minY;
+
+        const width = screenMaxX - screenMinX;
+        const height = screenMaxY - screenMinY;
 
         if (width === 0 && height === 0) {
             // No drawing, reset to default
@@ -150,20 +163,21 @@ class LogoInterpreter {
         }
 
         // Add 10% padding
-        const padding = 1.1;
-        const drawingWidth = width * padding;
-        const drawingHeight = height * padding;
+        const paddingFactor = 0.1;
+        const paddingX = width * paddingFactor;
+        const paddingY = height * paddingFactor;
+
+        const contentWidth = width + 2 * paddingX;
+        const contentHeight = height + 2 * paddingY;
 
         // Calculate zoom to fit both dimensions
-        const zoomX = 600 / drawingWidth;
-        const zoomY = 600 / drawingHeight;
+        const zoomX = 600 / contentWidth;
+        const zoomY = 600 / contentHeight;
         const newZoom = Math.min(zoomX, zoomY);
 
-        // Center the drawing
-        const centerX = (bbox.minX + bbox.maxX) / 2;
-        const centerY = (bbox.minY + bbox.maxY) / 2;
-        const panX = centerX - 300 / newZoom;
-        const panY = centerY - 300 / newZoom;
+        // Calculate pan to center the content
+        const panX = screenMinX - paddingX;
+        const panY = screenMinY - paddingY;
 
         this.setZoom(newZoom, panX, panY);
     }
@@ -2034,11 +2048,29 @@ SQUARE :base + SQRT 100   ; sqrt(100) = 10, so 40x40 square
     const zoomResetButton = document.getElementById('zoomResetButton');
 
     zoomInButton.addEventListener('click', () => {
-        interpreter.setZoom(interpreter.zoom * 1.2);
+        const oldZoom = interpreter.zoom;
+        const newZoom = oldZoom * 1.2;
+
+        // Keep center of view in the same place
+        const oldWidth = 600 / oldZoom;
+        const newWidth = 600 / newZoom;
+        const newPanX = interpreter.panX + (oldWidth - newWidth) / 2;
+        const newPanY = interpreter.panY + (oldWidth - newWidth) / 2;
+
+        interpreter.setZoom(newZoom, newPanX, newPanY);
     });
 
     zoomOutButton.addEventListener('click', () => {
-        interpreter.setZoom(interpreter.zoom / 1.2);
+        const oldZoom = interpreter.zoom;
+        const newZoom = oldZoom / 1.2;
+
+        // Keep center of view in the same place
+        const oldWidth = 600 / oldZoom;
+        const newWidth = 600 / newZoom;
+        const newPanX = interpreter.panX + (oldWidth - newWidth) / 2;
+        const newPanY = interpreter.panY + (oldWidth - newWidth) / 2;
+
+        interpreter.setZoom(newZoom, newPanX, newPanY);
     });
 
     zoomFitButton.addEventListener('click', () => {
