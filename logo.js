@@ -1493,17 +1493,11 @@ class LogoInterpreter {
                             }
 
                             const varName = controlList[0].replace(':', '').replace('"', '').toUpperCase();
-                            console.log('FOR DEBUG: controlList =', controlList);
-                            console.log('FOR DEBUG: varName =', varName);
-                            console.log('FOR DEBUG: about to evaluate controlList[1] =', controlList[1]);
                             const start = this.evaluateExpression(controlList[1]);
-                            console.log('FOR DEBUG: start =', start);
                             const end = this.evaluateExpression(controlList[2]);
-                            console.log('FOR DEBUG: end =', end);
                             const increment = controlList.length === 4
                                 ? this.evaluateExpression(controlList[3])
                                 : (start <= end ? 1 : -1);
-                            console.log('FOR DEBUG: increment =', increment);
 
                             if (tokens[afterControl] !== '[') {
                                 throw new Error('FOR requires a command block in brackets');
@@ -1512,13 +1506,9 @@ class LogoInterpreter {
                             const { block: commandBlock, nextIndex: afterCommands } = this.parseBlock(tokens, afterControl + 1);
 
                             // Execute the FOR loop
-                            console.log('FOR DEBUG: About to start loop, varName =', varName, 'start =', start, 'end =', end, 'increment =', increment);
-                            console.log('FOR DEBUG: commandBlock =', commandBlock);
                             if (increment > 0) {
                                 for (let loopVar = start; loopVar <= end; loopVar += increment) {
-                                    console.log('FOR DEBUG: Setting variable', varName, '=', loopVar);
                                     this.setVariable(varName, loopVar);
-                                    console.log('FOR DEBUG: Variable set, about to execute commandBlock');
                                     await this.execute(commandBlock);
                                     await this.sleep(10);
                                 }
