@@ -1493,11 +1493,17 @@ class LogoInterpreter {
                             }
 
                             const varName = controlList[0].replace(':', '').replace('"', '');
+                            console.log('FOR DEBUG: controlList =', controlList);
+                            console.log('FOR DEBUG: varName =', varName);
+                            console.log('FOR DEBUG: about to evaluate controlList[1] =', controlList[1]);
                             const start = this.evaluateExpression(controlList[1]);
+                            console.log('FOR DEBUG: start =', start);
                             const end = this.evaluateExpression(controlList[2]);
+                            console.log('FOR DEBUG: end =', end);
                             const increment = controlList.length === 4
                                 ? this.evaluateExpression(controlList[3])
                                 : (start <= end ? 1 : -1);
+                            console.log('FOR DEBUG: increment =', increment);
 
                             if (tokens[afterControl] !== '[') {
                                 throw new Error('FOR requires a command block in brackets');
