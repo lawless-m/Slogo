@@ -352,22 +352,40 @@ class LogoInterpreter {
 
     // Multiplication, division, and modulo (medium precedence)
     parseMulDiv(tokens, index) {
-        let { value, nextIndex } = this.parseUnary(tokens, index);
+        let { value, nextIndex } = this.parseExponentiation(tokens, index);
 
         while (nextIndex < tokens.length) {
             const op = tokens[nextIndex];
             if (op === '*') {
-                const right = this.parseUnary(tokens, nextIndex + 1);
+                const right = this.parseExponentiation(tokens, nextIndex + 1);
                 value = value * right.value;
                 nextIndex = right.nextIndex;
             } else if (op === '/') {
-                const right = this.parseUnary(tokens, nextIndex + 1);
+                const right = this.parseExponentiation(tokens, nextIndex + 1);
                 if (right.value === 0) throw new Error('Division by zero');
                 value = value / right.value;
                 nextIndex = right.nextIndex;
             } else if (op.toUpperCase() === 'MOD') {
-                const right = this.parseUnary(tokens, nextIndex + 1);
+                const right = this.parseExponentiation(tokens, nextIndex + 1);
                 value = value % right.value;
+                nextIndex = right.nextIndex;
+            } else {
+                break;
+            }
+        }
+
+        return { value, nextIndex };
+    }
+
+    // Exponentiation (higher precedence than multiplication)
+    parseExponentiation(tokens, index) {
+        let { value, nextIndex } = this.parseUnary(tokens, index);
+
+        while (nextIndex < tokens.length) {
+            const op = tokens[nextIndex];
+            if (op === '^') {
+                const right = this.parseUnary(tokens, nextIndex + 1);
+                value = Math.pow(value, right.value);
                 nextIndex = right.nextIndex;
             } else {
                 break;
