@@ -1492,7 +1492,7 @@ class LogoInterpreter {
                                 throw new Error('FOR control list must be [variable start end] or [variable start end increment]');
                             }
 
-                            const varName = controlList[0].replace(':', '').replace('"', '');
+                            const varName = controlList[0].replace(':', '').replace('"', '').toUpperCase();
                             console.log('FOR DEBUG: controlList =', controlList);
                             console.log('FOR DEBUG: varName =', varName);
                             console.log('FOR DEBUG: about to evaluate controlList[1] =', controlList[1]);
