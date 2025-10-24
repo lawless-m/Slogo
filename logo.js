@@ -185,14 +185,16 @@ class LogoInterpreter {
 
     // Helper: collect and evaluate expression, return value and next index
     getNextValue(tokens, index) {
-        const { tokens: exprTokens, nextIndex } = this.collectExpressionTokens(tokens, index);
+        const { tokens: exprTokens, nextIndex: collectedEndIndex } = this.collectExpressionTokens(tokens, index);
         if (exprTokens.length === 0) {
             const prevToken = index > 0 ? tokens[index - 1] : 'start';
             const nextToken = index < tokens.length ? tokens[index] : 'end of program';
             throw new Error(`Expected expression after "${prevToken}", got "${nextToken}"`);
         }
         const result = this.parseExpression(exprTokens, 0);
-        return { value: result.value, nextIndex };
+        // Convert parseExpression's nextIndex (relative to exprTokens) back to original tokens
+        const actualNextIndex = index + result.nextIndex;
+        return { value: result.value, nextIndex: actualNextIndex };
     }
 
     evaluateExpression(tokens, startIndex = 0) {
