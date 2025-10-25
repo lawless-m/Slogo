@@ -1,0 +1,33 @@
+home
+clear
+rt 90
+make "a 100
+make "b 80
+make "c 60
+make "d 40
+make "e 20
+pensize 10
+
+to swirl 
+fd :a lt 90
+fd :b lt 90
+fd :c lt 90
+fd :d lt 90
+fd :e lt 90
+fd :e rt 90
+fd :e rt 90
+fd :d rt 90
+fd :c rt 90
+fd :b rt 90
+fd :a rt 90
+fd :a lt 90
+ end
+
+repeat 16 [ swirl ]
+rt 90
+repeat 9 [ swirl ]
+rt 90
+repeat 16 [ swirl ]
+rt 90
+repeat 9 [ swirl ]
+
