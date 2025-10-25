@@ -2030,10 +2030,10 @@ SQUARE :base + SQRT 100   ; sqrt(100) = 10, so 40x40 square
             const code = await response.text();
             codeEditor.value = code;
 
-            interpreter.output('Loaded code from URL: ' + url);
+            interpreter.log('Loaded code from URL: ' + url);
         } catch (error) {
             alert('Failed to load from URL: ' + error.message);
-            interpreter.output('Error loading from URL: ' + error.message);
+            interpreter.log('Error loading from URL: ' + error.message);
         } finally {
             loadUrlButton.disabled = false;
             loadUrlButton.textContent = 'Load from URL';
