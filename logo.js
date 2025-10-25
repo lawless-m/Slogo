@@ -2025,6 +2025,23 @@ SQUARE :base + SQRT 100   ; sqrt(100) = 10, so 40x40 square
         document.getElementById('canvas').style.backgroundColor = e.target.value;
     });
 
+    // Color palette click handler
+    const colorPalette = document.getElementById('colorPalette');
+    colorPalette.addEventListener('click', (e) => {
+        if (e.target.classList.contains('palette-color')) {
+            const [r, g, b] = e.target.dataset.color.split(',').map(Number);
+            interpreter.setPenColor(r, g, b);
+
+            // Update the color picker to match
+            const hex = '#' + [r, g, b].map(c => c.toString(16).padStart(2, '0')).join('');
+            penColorInput.value = hex;
+
+            // Update active state
+            document.querySelectorAll('.palette-color').forEach(el => el.classList.remove('active'));
+            e.target.classList.add('active');
+        }
+    });
+
     speedInput.addEventListener('input', (e) => {
         const speed = parseInt(e.target.value);
         speedValue.textContent = speed;

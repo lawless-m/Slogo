@@ -190,9 +190,9 @@ header p {
 }
 
 #canvas {
-    border: 2px solid #e2e8f0;
+    border: 2px solid #2a2a3e;
     border-radius: 5px;
-    background: white;
+    background: #2a2a2a;
     display: block;
 }
 
@@ -215,6 +215,50 @@ header p {
 
 .canvas-toolbar input[type="range"] {
     width: 100px;
+}
+
+.color-palette-section {
+    background: #1a1a2e;
+    border: 1px solid #2a2a3e;
+    border-radius: 5px;
+    padding: 12px;
+    margin-bottom: 15px;
+}
+
+.palette-label {
+    color: #cbd5e1;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.color-palette {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 6px;
+}
+
+.palette-color {
+    width: 100%;
+    aspect-ratio: 1;
+    border: 2px solid #2a2a3e;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.palette-color:hover {
+    transform: scale(1.15);
+    border-color: #ffb000;
+    box-shadow: 0 0 10px rgba(255, 176, 0, 0.4);
+    z-index: 10;
+}
+
+.palette-color.active {
+    border-color: #ff8800;
+    box-shadow: 0 0 15px rgba(255, 136, 0, 0.6);
+    transform: scale(1.1);
 }
 
 .turtle-info {
