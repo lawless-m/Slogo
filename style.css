@@ -6,7 +6,7 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
     min-height: 100vh;
     padding: 20px;
 }
@@ -41,10 +41,11 @@ header p {
 }
 
 .editor-section, .canvas-section {
-    background: white;
+    background: #0f1419;
     border-radius: 10px;
     padding: 20px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    border: 1px solid #2a2a3e;
 }
 
 .toolbar, .canvas-toolbar {
@@ -66,24 +67,27 @@ header p {
 }
 
 .btn-primary {
-    background: #667eea;
-    color: white;
+    background: #ff8800;
+    color: #000;
+    font-weight: 700;
 }
 
 .btn-primary:hover {
-    background: #5568d3;
+    background: #ffb000;
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 5px 15px rgba(255, 136, 0, 0.5);
 }
 
 .btn-secondary {
-    background: #e2e8f0;
-    color: #334155;
+    background: #2a2a3e;
+    color: #cbd5e1;
+    border: 1px solid #4a4a5e;
 }
 
 .btn-secondary:hover {
-    background: #cbd5e1;
+    background: #3a3a4e;
     transform: translateY(-2px);
+    border-color: #5a5a6e;
 }
 
 .btn-danger {
@@ -105,12 +109,14 @@ header p {
 .btn-small {
     padding: 5px 10px;
     font-size: 12px;
-    background: #e2e8f0;
-    color: #334155;
+    background: #2a2a3e;
+    color: #cbd5e1;
+    border: 1px solid #4a4a5e;
 }
 
 .btn-small:hover {
-    background: #cbd5e1;
+    background: #3a3a4e;
+    border-color: #5a5a6e;
 }
 
 .zoom-controls {
@@ -127,17 +133,30 @@ header p {
     width: 100%;
     height: 300px;
     padding: 15px;
-    border: 2px solid #e2e8f0;
+    border: 3px solid #1a1a1a;
     border-radius: 5px;
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     font-size: 14px;
     resize: vertical;
-    transition: border-color 0.3s;
+    transition: all 0.3s;
+    background: #000000;
+    color: #ffb000;
+    text-shadow: 0 0 5px #ffb000, 0 0 10px #ff8800;
+    box-shadow: inset 0 0 30px rgba(255, 176, 0, 0.1);
+    position: relative;
 }
 
 #codeEditor:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: #ff8800;
+    box-shadow:
+        inset 0 0 30px rgba(255, 176, 0, 0.15),
+        0 0 20px rgba(255, 136, 0, 0.3);
+}
+
+#codeEditor::placeholder {
+    color: #aa7700;
+    opacity: 0.6;
 }
 
 .output-container {
@@ -182,7 +201,7 @@ header p {
     align-items: center;
     gap: 8px;
     font-size: 14px;
-    color: #334155;
+    color: #cbd5e1;
     font-weight: 500;
 }
 
@@ -202,10 +221,11 @@ header p {
     display: flex;
     justify-content: space-around;
     padding: 15px;
-    background: #f8fafc;
+    background: #1a1a2e;
     border-radius: 5px;
     font-size: 14px;
-    color: #475569;
+    color: #94a3b8;
+    border: 1px solid #2a2a3e;
 }
 
 .turtle-info span {
@@ -213,22 +233,24 @@ header p {
 }
 
 .turtle-info span span {
-    color: #667eea;
+    color: #ffb000;
     font-weight: 700;
 }
 
 .help-section {
-    background: white;
+    background: #0f1419;
     border-radius: 10px;
     padding: 30px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    border: 1px solid #2a2a3e;
 }
 
 .help-section h2 {
-    color: #1e293b;
+    color: #ffb000;
     margin-bottom: 20px;
     text-align: center;
     font-size: 2em;
+    text-shadow: 0 0 10px rgba(255, 176, 0, 0.3);
 }
 
 .commands-grid {
@@ -238,10 +260,10 @@ header p {
 }
 
 .command-group h3 {
-    color: #667eea;
+    color: #ff8800;
     margin-bottom: 15px;
     font-size: 1.3em;
-    border-bottom: 2px solid #e2e8f0;
+    border-bottom: 2px solid #2a2a3e;
     padding-bottom: 10px;
 }
 
@@ -251,17 +273,18 @@ header p {
 
 .command-group li {
     padding: 8px 0;
-    color: #475569;
+    color: #94a3b8;
     line-height: 1.6;
 }
 
 .command-group code {
-    background: #f1f5f9;
+    background: #1a1a2e;
     padding: 2px 8px;
     border-radius: 3px;
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-    color: #667eea;
+    color: #ffb000;
     font-weight: 600;
+    border: 1px solid #2a2a3e;
 }
 
 #turtle {
@@ -303,15 +326,38 @@ header p {
 }
 
 ::-webkit-scrollbar-track {
-    background: #f1f5f9;
+    background: #1a1a2e;
     border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
+    background: #3a3a4e;
     border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
+    background: #4a4a5e;
+}
+
+/* CRT scanline effect for code editor */
+.editor-container {
+    position: relative;
+}
+
+.editor-container::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.15) 0px,
+        transparent 1px,
+        transparent 2px,
+        rgba(0, 0, 0, 0.15) 3px
+    );
+    pointer-events: none;
+    border-radius: 5px;
 }
