@@ -1905,6 +1905,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const clearButton = document.getElementById('clearButton');
     const resetButton = document.getElementById('resetButton');
     const exampleButton = document.getElementById('exampleButton');
+    const loadUrlButton = document.getElementById('loadUrlButton');
     const codeEditor = document.getElementById('codeEditor');
     const penColorInput = document.getElementById('penColor');
     const bgColorInput = document.getElementById('bgColor');
@@ -2011,6 +2012,32 @@ SETPENCOLOR 2  ; Green
 MAKE "base 30
 SQUARE :base + SQRT 100   ; sqrt(100) = 10, so 40x40 square
 `;
+    });
+
+    loadUrlButton.addEventListener('click', async () => {
+        const url = prompt('Enter URL to load Logo code from:');
+        if (!url) return;
+
+        try {
+            loadUrlButton.disabled = true;
+            loadUrlButton.textContent = 'Loading...';
+
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const code = await response.text();
+            codeEditor.value = code;
+
+            interpreter.output('Loaded code from URL: ' + url);
+        } catch (error) {
+            alert('Failed to load from URL: ' + error.message);
+            interpreter.output('Error loading from URL: ' + error.message);
+        } finally {
+            loadUrlButton.disabled = false;
+            loadUrlButton.textContent = 'Load from URL';
+        }
     });
 
     penColorInput.addEventListener('change', (e) => {
