@@ -1227,6 +1227,7 @@ class LogoInterpreter {
         let tokenMeta = []; // Store metadata (line, column) for each token
         let current = '';
         let inBracket = false;
+        let inString = false; // Track if we're inside a quoted string
         let line = 1;
         let column = 1;
         let tokenStartLine = 1;
@@ -1243,8 +1244,8 @@ class LogoInterpreter {
                 column++;
             }
 
-            // Handle semicolon comments - skip to end of line
-            if (char === ';') {
+            // Handle semicolon comments - skip to end of line (but not inside strings)
+            if (char === ';' && !inString) {
                 // Save any current token before the comment
                 if (current.trim()) {
                     tokens.push(current.trim());
@@ -1263,6 +1264,38 @@ class LogoInterpreter {
             if (current === '' && char !== ' ' && char !== '\t' && char !== '\n' && char !== '\r') {
                 tokenStartLine = line;
                 tokenStartColumn = column;
+            }
+
+            // Handle quoted strings - start or end
+            if (char === '"') {
+                if (!inString) {
+                    // Starting a quoted string
+                    if (current.trim()) {
+                        // Save any previous token
+                        tokens.push(current.trim());
+                        tokenMeta.push({ line: tokenStartLine, column: tokenStartColumn });
+                        current = '';
+                    }
+                    tokenStartLine = line;
+                    tokenStartColumn = column;
+                    inString = true;
+                    current = '"'; // Include the opening quote
+                } else {
+                    // Ending a quoted string - don't include closing quote
+                    inString = false;
+                    if (current) {
+                        tokens.push(current);
+                        tokenMeta.push({ line: tokenStartLine, column: tokenStartColumn });
+                        current = '';
+                    }
+                }
+                continue;
+            }
+
+            // If we're in a string, just collect characters (including spaces)
+            if (inString) {
+                current += char;
+                continue;
             }
 
             if (char === '[') {
