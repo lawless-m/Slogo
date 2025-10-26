@@ -986,6 +986,12 @@ class LogoInterpreter {
             }
         }
 
+        // String literal ("text)
+        if (token.startsWith('"')) {
+            const stringValue = token.substring(1);
+            return { value: stringValue, nextIndex: index + 1 };
+        }
+
         // Check if it's a procedure call
         const upperToken = token.toUpperCase();
         if (this.procedures[upperToken]) {
