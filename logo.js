@@ -1266,35 +1266,45 @@ class LogoInterpreter {
                 tokenStartColumn = column;
             }
 
-            // Handle quoted strings - start or end
-            if (char === '"') {
-                if (!inString) {
-                    // Starting a quoted string
-                    if (current.trim()) {
-                        // Save any previous token
-                        tokens.push(current.trim());
-                        tokenMeta.push({ line: tokenStartLine, column: tokenStartColumn });
-                        current = '';
-                    }
-                    tokenStartLine = line;
-                    tokenStartColumn = column;
-                    inString = true;
-                    current = '"'; // Include the opening quote
-                } else {
-                    // Ending a quoted string - don't include closing quote
+            // If we're in a quoted string/word, handle special cases
+            if (inString) {
+                if (char === '"') {
+                    // Closing quote found - end multi-word string (don't include closing quote)
                     inString = false;
                     if (current) {
                         tokens.push(current);
                         tokenMeta.push({ line: tokenStartLine, column: tokenStartColumn });
                         current = '';
                     }
+                    continue;
                 }
+                if (/\s/.test(char)) {
+                    // Whitespace found - end single quoted word like "varname
+                    inString = false;
+                    if (current) {
+                        tokens.push(current);
+                        tokenMeta.push({ line: tokenStartLine, column: tokenStartColumn });
+                        current = '';
+                    }
+                    continue;
+                }
+                // Regular character - keep collecting
+                current += char;
                 continue;
             }
 
-            // If we're in a string, just collect characters (including spaces)
-            if (inString) {
-                current += char;
+            // Starting a quoted string/word
+            if (char === '"') {
+                if (current.trim()) {
+                    // Save any previous token
+                    tokens.push(current.trim());
+                    tokenMeta.push({ line: tokenStartLine, column: tokenStartColumn });
+                    current = '';
+                }
+                tokenStartLine = line;
+                tokenStartColumn = column;
+                inString = true;
+                current = '"'; // Include the opening quote
                 continue;
             }
 

@@ -140,7 +140,8 @@ REPEAT 4 [
                     <ul>
                         <li><code>MAKE "var value</code> - Set variable</li>
                         <li><code>:var</code> - Use variable value</li>
-                        <li><code>"text"</code> - String literal (use quotes for strings with spaces: <code>"hello world"</code>)</li>
+                        <li><code>"word</code> - Quoted word (single word, no closing quote needed)</li>
+                        <li><code>"text with spaces"</code> - String literal with spaces (closing quote required)</li>
                         <li><code>LOCAL "var</code> or <code>LOCAL [var1 var2]</code> - Declare local variable(s)</li>
                         <li><code>REPEAT n [commands]</code> - Repeat commands n times (use REPCOUNT for iteration)</li>
                         <li><code>DOTIMES [var count] [commands]</code> - Like REPEAT but with named variable (1 to count)</li>
@@ -238,6 +239,6 @@ REPEAT 4 [
         </div>
     </div>
 
-    <script src="logo.js?v=20251026-3"></script>
+    <script src="logo.js?v=20251026-4"></script>
 </body>
 </html>
