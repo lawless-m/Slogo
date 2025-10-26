@@ -140,6 +140,8 @@ REPEAT 4 [
                     <ul>
                         <li><code>MAKE "var value</code> - Set variable</li>
                         <li><code>:var</code> - Use variable value</li>
+                        <li><code>"word</code> - Quoted word (single word, no closing quote needed)</li>
+                        <li><code>"text with spaces"</code> - String literal with spaces (closing quote required)</li>
                         <li><code>LOCAL "var</code> or <code>LOCAL [var1 var2]</code> - Declare local variable(s)</li>
                         <li><code>REPEAT n [commands]</code> - Repeat commands n times (use REPCOUNT for iteration)</li>
                         <li><code>DOTIMES [var count] [commands]</code> - Like REPEAT but with named variable (1 to count)</li>
@@ -227,16 +229,16 @@ REPEAT 4 [
                 <div class="command-group">
                     <h3>Higher-Order Functions</h3>
                     <ul>
-                        <li><code>MAP "proc list</code> - Apply procedure to each element</li>
-                        <li><code>FILTER "pred list</code> - Keep elements where predicate is true</li>
-                        <li><code>REDUCE "op list</code> - Reduce list to single value</li>
-                        <li><code>APPLY "proc arglist</code> - Call procedure with argument list</li>
+                        <li><code>MAP "proc list</code> - Apply procedure to each element (can be used as command or function)</li>
+                        <li><code>FILTER "pred list</code> - Keep elements where predicate is true (can be used as command or function)</li>
+                        <li><code>REDUCE "op list</code> - Reduce list to single value (can be used as command or function)</li>
+                        <li><code>APPLY "proc arglist</code> - Call procedure with argument list (can be used as command or function)</li>
                     </ul>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="logo.js?v=20251024-14"></script>
+    <script src="logo.js?v=20251026-7"></script>
 </body>
 </html>
