@@ -252,7 +252,7 @@ class LogoInterpreter {
                          'PENDOWN', 'PD', 'PENSIZE', 'SETPENSIZE', 'SETPENCOLOR', 'SETPC', 'SETPENRGB',
                          'CIRCLE', 'BOX', 'SQUARE', 'MAKE', 'CLEAR', 'CLEARSCREEN', 'CS',
                          'HIDETURTLE', 'HT', 'SHOWTURTLE', 'ST', 'REPEAT', 'WHILE', 'FOR', 'DOTIMES',
-                         'IF', 'IFELSE', 'TO', 'END'];
+                         'IF', 'IFELSE', 'TO', 'END', 'PRINT', 'PR', 'WRITE', 'WR'];
 
         while (i < tokens.length) {
             const token = tokens[i];
@@ -700,7 +700,7 @@ class LogoInterpreter {
                 // Check if it's a command keyword
                 const upper = nextToken.toUpperCase();
                 const keywords = ['FORWARD', 'FD', 'BACKWARD', 'BK', 'LEFT', 'LT', 'RIGHT', 'RT',
-                                'MAKE', 'IF', 'REPEAT', 'WHILE', 'PRINT', 'PR', 'OUTPUT', 'STOP'];
+                                'MAKE', 'IF', 'REPEAT', 'WHILE', 'PRINT', 'PR', 'WRITE', 'WR', 'OUTPUT', 'STOP'];
                 if (keywords.includes(upper)) break;
 
                 const { value, nextIndex } = this.parsePrimary(tokens, i);
@@ -727,7 +727,7 @@ class LogoInterpreter {
                 // Check if it's a command keyword
                 const upper = nextToken.toUpperCase();
                 const keywords = ['FORWARD', 'FD', 'BACKWARD', 'BK', 'LEFT', 'LT', 'RIGHT', 'RT',
-                                'MAKE', 'IF', 'REPEAT', 'WHILE', 'PRINT', 'PR', 'OUTPUT', 'STOP'];
+                                'MAKE', 'IF', 'REPEAT', 'WHILE', 'PRINT', 'PR', 'WRITE', 'WR', 'OUTPUT', 'STOP'];
                 if (keywords.includes(upper)) break;
 
                 const { value, nextIndex } = this.parsePrimary(tokens, i);
@@ -1169,9 +1169,19 @@ class LogoInterpreter {
         this.output.textContent += formatted + '\n';
     }
 
+    write(message) {
+        // Like log but without newline
+        const formatted = this.formatValue(message);
+        this.output.textContent += formatted;
+    }
+
     formatValue(value) {
         if (Array.isArray(value)) {
             return '[' + value.map(v => this.formatValue(v)).join(' ') + ']';
+        }
+        // Round numbers to 3 decimal places to avoid scientific notation like e-15
+        if (typeof value === 'number') {
+            return Math.round(value * 1000) / 1000;
         }
         return value;
     }
@@ -1755,6 +1765,15 @@ class LogoInterpreter {
                         {
                             const { value, nextIndex } = this.getNextValue(tokens, i + 1);
                             this.log(value);
+                            i = nextIndex - 1;
+                        }
+                        break;
+
+                    case 'WRITE':
+                    case 'WR':
+                        {
+                            const { value, nextIndex } = this.getNextValue(tokens, i + 1);
+                            this.write(value);
                             i = nextIndex - 1;
                         }
                         break;
