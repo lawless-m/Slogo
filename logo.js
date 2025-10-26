@@ -257,8 +257,30 @@ class LogoInterpreter {
         while (i < tokens.length) {
             const token = tokens[i];
 
-            // Stop at brackets
-            if (token === '[' || token === ']') {
+            // Handle list literals - collect entire list including brackets
+            if (token === '[') {
+                expressionTokens.push(token);
+                i++;
+                let depth = 1;
+                // Collect all tokens until matching closing bracket
+                while (i < tokens.length && depth > 0) {
+                    if (tokens[i] === '[') {
+                        depth++;
+                    } else if (tokens[i] === ']') {
+                        depth--;
+                    }
+                    expressionTokens.push(tokens[i]);
+                    i++;
+                }
+                // We've collected the entire list, continue or stop
+                if (i < tokens.length && keywords.includes(tokens[i].toUpperCase())) {
+                    break;
+                }
+                continue;
+            }
+
+            // Stop at closing bracket (shouldn't happen if lists are handled correctly)
+            if (token === ']') {
                 break;
             }
 
