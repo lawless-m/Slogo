@@ -252,7 +252,7 @@ class LogoInterpreter {
                          'PENDOWN', 'PD', 'PENSIZE', 'SETPENSIZE', 'SETPENCOLOR', 'SETPC', 'SETPENRGB',
                          'CIRCLE', 'BOX', 'SQUARE', 'MAKE', 'CLEAR', 'CLEARSCREEN', 'CS',
                          'HIDETURTLE', 'HT', 'SHOWTURTLE', 'ST', 'REPEAT', 'WHILE', 'FOR', 'DOTIMES',
-                         'IF', 'IFELSE', 'TO', 'END', 'PRINT', 'PR', 'WRITE', 'WR'];
+                         'IF', 'IFELSE', 'TO', 'END', 'PRINT', 'PR', 'WRITE', 'WR', 'APPLY', 'MAP', 'FILTER', 'REDUCE'];
 
         while (i < tokens.length) {
             const token = tokens[i];
@@ -722,7 +722,8 @@ class LogoInterpreter {
                 // Check if it's a command keyword
                 const upper = nextToken.toUpperCase();
                 const keywords = ['FORWARD', 'FD', 'BACKWARD', 'BK', 'LEFT', 'LT', 'RIGHT', 'RT',
-                                'MAKE', 'IF', 'REPEAT', 'WHILE', 'PRINT', 'PR', 'WRITE', 'WR', 'OUTPUT', 'STOP'];
+                                'MAKE', 'IF', 'REPEAT', 'WHILE', 'PRINT', 'PR', 'WRITE', 'WR', 'OUTPUT', 'STOP',
+                                'APPLY', 'MAP', 'FILTER', 'REDUCE'];
                 if (keywords.includes(upper)) break;
 
                 const { value, nextIndex } = this.parsePrimary(tokens, i);
@@ -749,7 +750,8 @@ class LogoInterpreter {
                 // Check if it's a command keyword
                 const upper = nextToken.toUpperCase();
                 const keywords = ['FORWARD', 'FD', 'BACKWARD', 'BK', 'LEFT', 'LT', 'RIGHT', 'RT',
-                                'MAKE', 'IF', 'REPEAT', 'WHILE', 'PRINT', 'PR', 'WRITE', 'WR', 'OUTPUT', 'STOP'];
+                                'MAKE', 'IF', 'REPEAT', 'WHILE', 'PRINT', 'PR', 'WRITE', 'WR', 'OUTPUT', 'STOP',
+                                'APPLY', 'MAP', 'FILTER', 'REDUCE'];
                 if (keywords.includes(upper)) break;
 
                 const { value, nextIndex } = this.parsePrimary(tokens, i);
@@ -1867,6 +1869,209 @@ class LogoInterpreter {
                         {
                             const { value, nextIndex } = this.getNextValue(tokens, i + 1);
                             this.write(value);
+                            i = nextIndex - 1;
+                        }
+                        break;
+
+                    case 'APPLY':
+                        {
+                            // APPLY "procname [args]
+                            const procNameToken = tokens[i + 1];
+                            const procName = procNameToken.startsWith('"')
+                                ? procNameToken.substring(1).toUpperCase()
+                                : procNameToken.toUpperCase();
+
+                            const { value: argsList, nextIndex } = this.getNextValue(tokens, i + 2);
+                            if (!Array.isArray(argsList)) {
+                                throw new Error('APPLY requires a list as second argument');
+                            }
+
+                            const proc = this.procedures[procName];
+                            if (!proc) {
+                                throw new Error(`APPLY: procedure '${procName}' not defined`);
+                            }
+                            if (proc.params && argsList.length !== proc.params.length) {
+                                throw new Error(`APPLY: procedure '${procName}' expects ${proc.params.length} arguments but got ${argsList.length}`);
+                            }
+
+                            // Push scope with arguments bound to parameters
+                            const localScope = {};
+                            if (proc.params) {
+                                for (let p = 0; p < proc.params.length; p++) {
+                                    localScope[proc.params[p]] = argsList[p];
+                                }
+                            }
+                            this.pushScope(localScope);
+
+                            try {
+                                // Execute procedure
+                                await this.execute(proc.body);
+                            } catch (error) {
+                                if (error instanceof OutputException) {
+                                    // Could log or use the output value
+                                    this.lastReturnValue = error.value;
+                                } else if (error instanceof StopException) {
+                                    // STOP just exits
+                                } else {
+                                    throw error;
+                                }
+                            } finally {
+                                this.popScope();
+                            }
+
+                            i = nextIndex - 1;
+                        }
+                        break;
+
+                    case 'MAP':
+                        {
+                            // MAP "procname list
+                            const procNameToken = tokens[i + 1];
+                            const procName = procNameToken.startsWith('"')
+                                ? procNameToken.substring(1).toUpperCase()
+                                : procNameToken.toUpperCase();
+
+                            const { value: list, nextIndex } = this.getNextValue(tokens, i + 2);
+                            if (!Array.isArray(list)) {
+                                throw new Error('MAP requires a list as second argument');
+                            }
+
+                            const proc = this.procedures[procName];
+                            if (!proc) {
+                                throw new Error(`MAP: procedure '${procName}' not defined`);
+                            }
+
+                            const result = [];
+                            for (const item of list) {
+                                const localScope = {};
+                                if (proc.params && proc.params.length > 0) {
+                                    localScope[proc.params[0]] = item;
+                                }
+                                this.pushScope(localScope);
+
+                                let itemResult = 0;
+                                try {
+                                    await this.execute(proc.body);
+                                } catch (error) {
+                                    if (error instanceof OutputException) {
+                                        itemResult = error.value;
+                                    } else if (error instanceof StopException) {
+                                        // STOP returns 0
+                                        itemResult = 0;
+                                    } else {
+                                        this.popScope();
+                                        throw error;
+                                    }
+                                }
+
+                                this.popScope();
+                                result.push(itemResult);
+                            }
+
+                            this.lastReturnValue = result;
+                            i = nextIndex - 1;
+                        }
+                        break;
+
+                    case 'FILTER':
+                        {
+                            // FILTER "predicate list
+                            const procNameToken = tokens[i + 1];
+                            const procName = procNameToken.startsWith('"')
+                                ? procNameToken.substring(1).toUpperCase()
+                                : procNameToken.toUpperCase();
+
+                            const { value: list, nextIndex } = this.getNextValue(tokens, i + 2);
+                            if (!Array.isArray(list)) {
+                                throw new Error('FILTER requires a list as second argument');
+                            }
+
+                            const proc = this.procedures[procName];
+                            if (!proc) {
+                                throw new Error(`FILTER: procedure '${procName}' not defined`);
+                            }
+
+                            const result = [];
+                            for (const item of list) {
+                                const localScope = {};
+                                if (proc.params && proc.params.length > 0) {
+                                    localScope[proc.params[0]] = item;
+                                }
+                                this.pushScope(localScope);
+
+                                let keep = false;
+                                try {
+                                    await this.execute(proc.body);
+                                } catch (error) {
+                                    if (error instanceof OutputException) {
+                                        keep = error.value !== 0;
+                                    } else if (error instanceof StopException) {
+                                        keep = false;
+                                    } else {
+                                        this.popScope();
+                                        throw error;
+                                    }
+                                }
+
+                                this.popScope();
+                                if (keep) {
+                                    result.push(item);
+                                }
+                            }
+
+                            this.lastReturnValue = result;
+                            i = nextIndex - 1;
+                        }
+                        break;
+
+                    case 'REDUCE':
+                        {
+                            // REDUCE "operation list
+                            const procNameToken = tokens[i + 1];
+                            const procName = procNameToken.startsWith('"')
+                                ? procNameToken.substring(1).toUpperCase()
+                                : procNameToken.toUpperCase();
+
+                            const { value: list, nextIndex } = this.getNextValue(tokens, i + 2);
+                            if (!Array.isArray(list)) {
+                                throw new Error('REDUCE requires a list as second argument');
+                            }
+                            if (list.length === 0) {
+                                throw new Error('REDUCE requires a non-empty list');
+                            }
+
+                            const proc = this.procedures[procName];
+                            if (!proc) {
+                                throw new Error(`REDUCE: procedure '${procName}' not defined`);
+                            }
+                            if (!proc.params || proc.params.length < 2) {
+                                throw new Error('REDUCE: procedure must take 2 parameters');
+                            }
+
+                            let accumulator = list[0];
+                            for (let idx = 1; idx < list.length; idx++) {
+                                const localScope = {};
+                                localScope[proc.params[0]] = accumulator;
+                                localScope[proc.params[1]] = list[idx];
+                                this.pushScope(localScope);
+
+                                try {
+                                    await this.execute(proc.body);
+                                } catch (error) {
+                                    if (error instanceof OutputException) {
+                                        accumulator = error.value;
+                                    } else if (error instanceof StopException) {
+                                        accumulator = 0;
+                                    } else {
+                                        this.popScope();
+                                        throw error;
+                                    }
+                                }
+
+                                this.popScope();
+                            }
+
+                            this.lastReturnValue = accumulator;
                             i = nextIndex - 1;
                         }
                         break;
