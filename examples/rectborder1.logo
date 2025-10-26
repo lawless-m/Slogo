@@ -1,0 +1,31 @@
+make "vnum 0
+to ws :v wr " " wr :v
+to ps :v wr " " pr :v
+
+to sp :v wr " " wr :v end
+
+to face :vs
+wr "FACE" 
+map "ws bl :vs
+ps last :vs
+end
+
+to ver  
+make "vnum :vnum + 1
+write "VERTEX " wr :vnum wr " " wr xcor wr " " pr ycor end
+to rect :w :h 
+ver 
+fd :h ver 
+rt 90 fd :w ver 
+face [ ( :vnum - 2 ) ( :vnum - 1 ) :vnum ]
+
+rt 90 fd :h ver
+rt 90 fd :w 
+face [ ( :vnum - 1 ) ( :vnum ) ( :vnum - 3 ) ]
+bk :w rt 180
+end
+
+home
+clear
+rect 100 30
+
